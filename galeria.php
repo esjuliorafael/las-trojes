@@ -18,6 +18,7 @@ $logo_actual = $logo->obtenerLogoActivo();
   <link rel="stylesheet" href="assets/css/styles.css">
   <link id="darkModeStylesheet" rel="stylesheet" href="assets/css/dark-mode.css" disabled>
   <style>
+    /* --- ESTILOS ESPECÍFICOS DE LA GALERÍA --- */
     .gallery-section {
       background-color: var(--white);
       margin-top: 2rem;
@@ -193,6 +194,7 @@ $logo_actual = $logo->obtenerLogoActivo();
     .gallery-item.masonry-item {
       height: auto;
     }
+    /* Masonry Layout helpers */
     .gallery-item.masonry-item:nth-child(7n+1) { min-height: 280px; }
     .gallery-item.masonry-item:nth-child(7n+2) { min-height: 180px; }
     .gallery-item.masonry-item:nth-child(7n+3) { min-height: 320px; }
@@ -219,8 +221,8 @@ $logo_actual = $logo->obtenerLogoActivo();
       object-fit: cover;
       object-position: center;
       transition: all 0.4s ease;
-      filter: saturate(0.95) brightness(1.05);
       display: block;
+      background-color: #000;
     }
     .gallery-item:hover .gallery-item-image {
       transform: scale(1.08);
@@ -251,6 +253,7 @@ $logo_actual = $logo->obtenerLogoActivo();
       transform: translateY(20px);
       opacity: 0;
       transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      pointer-events: none;
     }
     .gallery-item:hover .gallery-item-overlay {
       transform: translateY(0);
@@ -263,6 +266,7 @@ $logo_actual = $logo->obtenerLogoActivo();
       display: flex;
       gap: 0.5rem;
       z-index: 5;
+      pointer-events: none;
     }
     .media-indicator {
       background: rgba(0, 0, 0, 0.75);
@@ -274,11 +278,7 @@ $logo_actual = $logo->obtenerLogoActivo();
       align-items: center;
       gap: 0.3rem;
       border: 1px solid rgba(255, 255, 255, 0.2);
-      transition: all 0.3s ease;
-    }
-    .gallery-item:hover .media-indicator {
-      background: rgba(139, 94, 60, 0.9);
-      border-color: rgba(255, 255, 255, 0.4);
+      color: white;
     }
     .gallery-item-title {
       font-size: 1.2rem;
@@ -310,61 +310,6 @@ $logo_actual = $logo->obtenerLogoActivo();
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-    }
-    .gallery-item-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.3s ease;
-    }
-    .gallery-item:hover .gallery-item-image {
-      transform: scale(1.05);
-    }
-    .gallery-item-overlay {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-      padding: 2rem 1.5rem 1.5rem;
-      color: white;
-    }
-    .gallery-item-indicators {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      display: flex;
-      gap: 0.5rem;
-    }
-    .media-indicator {
-      background-color: rgba(0, 0, 0, 0.7);
-      padding: 0.25rem 0.5rem;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-    }
-    .gallery-item-title {
-      font-size: 1.125rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-    .gallery-item-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.875rem;
-      opacity: 0.9;
-    }
-    .likes-container {
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-    }
-    .location-text {
-      font-size: 0.75rem;
-      opacity: 0.8;
     }
     .empty-state {
       text-align: center;
@@ -620,59 +565,6 @@ $logo_actual = $logo->obtenerLogoActivo();
       .modal-image-container {
         height: 300px;
       }
-    }
-    @media (max-width: 480px) {
-      .gallery-grid {
-        grid-template-columns: 1fr;
-      }
-      .gallery-grid.masonry-mode {
-        columns: 1;
-        column-gap: 0;
-      }
-      .gallery-item.masonry-item:nth-child(n) { min-height: 200px; }
-      .gallery-item.masonry-item:nth-child(3n+1) { min-height: 240px; }
-      .gallery-item.masonry-item:nth-child(5n+1) { min-height: 180px; }
-      .gallery-item.masonry-item:nth-child(7n+1) { min-height: 220px; }
-      .gallery-item.masonry-item:nth-child(13n+1) { min-height: 260px; }
-      .search-header {
-        padding: 1rem;
-      }
-      .controls-container {
-        padding: 1rem;
-      }
-      .gallery-content {
-        padding: 1rem;
-      }
-      .gallery-item-overlay {
-        padding: 1.5rem 1rem 1rem;
-      }
-      .gallery-item-title {
-        font-size: 1.1rem;
-      }
-    }
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    .gallery-item {
-      animation: fadeInUp 0.6s ease forwards;
-    }
-    .gallery-item:nth-child(odd) {
-      animation-delay: 0.1s;
-    }
-    .gallery-item:nth-child(even) {
-      animation-delay: 0.2s;
-    }
-    .gallery-item:nth-child(4n) {
-      animation-delay: 0.3s;
-    }
-    @media (max-width: 768px) {
       .modal-close {
         top: 1rem;
         right: 1rem;
@@ -717,6 +609,33 @@ $logo_actual = $logo->obtenerLogoActivo();
       }
     }
     @media (max-width: 480px) {
+      .gallery-grid {
+        grid-template-columns: 1fr;
+      }
+      .gallery-grid.masonry-mode {
+        columns: 1;
+        column-gap: 0;
+      }
+      .gallery-item.masonry-item:nth-child(n) { min-height: 200px; }
+      .gallery-item.masonry-item:nth-child(3n+1) { min-height: 240px; }
+      .gallery-item.masonry-item:nth-child(5n+1) { min-height: 180px; }
+      .gallery-item.masonry-item:nth-child(7n+1) { min-height: 220px; }
+      .gallery-item.masonry-item:nth-child(13n+1) { min-height: 260px; }
+      .search-header {
+        padding: 1rem;
+      }
+      .controls-container {
+        padding: 1rem;
+      }
+      .gallery-content {
+        padding: 1rem;
+      }
+      .gallery-item-overlay {
+        padding: 1.5rem 1rem 1rem;
+      }
+      .gallery-item-title {
+        font-size: 1.1rem;
+      }
       .modal-close {
         top: 0.5rem;
         right: 0.5rem;
@@ -754,6 +673,28 @@ $logo_actual = $logo->obtenerLogoActivo();
         margin-bottom: 1rem;
       }
     }
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .gallery-item {
+      animation: fadeInUp 0.6s ease forwards;
+    }
+    .gallery-item:nth-child(odd) {
+      animation-delay: 0.1s;
+    }
+    .gallery-item:nth-child(even) {
+      animation-delay: 0.2s;
+    }
+    .gallery-item:nth-child(4n) {
+      animation-delay: 0.3s;
+    }
   </style>
 </head>
 <body>
@@ -771,7 +712,7 @@ $logo_actual = $logo->obtenerLogoActivo();
             <a href="#" id="themeToggle" class="btn-icon" aria-label="Cambiar tema">
               <i class="fa-solid fa-moon"></i>
             </a>
-            <a href="/contacto.html" class="btn-text">
+            <a href="/contacto.php" class="btn-text">
               <i class="fa-solid fa-phone"></i><span>Contáctanos</span>
             </a>
           </div>
@@ -783,19 +724,21 @@ $logo_actual = $logo->obtenerLogoActivo();
       </div>
     </div>
   </header>
+  
   <div class="nav-menu-overlay" id="navMenuOverlay">
     <div class="nav-menu-content">
       <ul class="nav-menu-list">
         <li class="nav-menu-item"><a href="#" class="nav-menu-link">Inicio</a></li>
         <li class="nav-menu-item"><a href="#" class="nav-menu-link">Nosotros</a></li>
-        <li class="nav-menu-item"><a href="#" class="nav-menu-link">Galería</a></li>
+        <li class="nav-menu-item"><a href="/galeria.php" class="nav-menu-link">Galería</a></li>
         <li class="nav-menu-item"><a href="#" class="nav-menu-link">Precios</a></li>
         <li class="nav-menu-item"><a href="#" class="nav-menu-link">Tienda</a></li>
         <li class="nav-menu-item"><a href="#" class="nav-menu-link">Blog</a></li>
-        <li class="nav-menu-item"><a href="/contacto.html" class="nav-menu-link">Contacto</a></li>
+        <li class="nav-menu-item"><a href="/contacto.php" class="nav-menu-link">Contacto</a></li>
       </ul>
     </div>
   </div>
+
   <section class="page-header-start container-wide">
     <img src="assets/images/42c08f60-d5b7-4aec-87cd-632c3a0ed6a6.jpeg" alt="Fondo Galería">
     <div class="page-header-overlay">
@@ -803,77 +746,42 @@ $logo_actual = $logo->obtenerLogoActivo();
       <p class="page-header-subtitle">Inicio / Galería</p>
     </div>
   </section>
+  
   <section class="gallery-section container-wide">
     <div class="search-header">
       <div class="search-container">
         <i class="fas fa-search search-icon"></i>
-        <input 
-          type="text" 
-          class="search-input" 
-          placeholder="Buscar fotos y videos..."
-          id="searchInput"
-        >
+        <input type="text" class="search-input" placeholder="Buscar fotos y videos..." id="searchInput">
         <i class="fas fa-times search-clear" id="searchClear" style="display: none;"></i>
       </div>
     </div>
+    
     <div class="controls-container">
       <div class="view-controls">
-        <button class="view-button" id="masonryButton" data-view="masonry">
-          <i class="fas fa-th"></i>
-        </button>
-        <button class="view-button active" id="gridButton" data-view="grid">
-          <i class="fas fa-th-large"></i>
-        </button>
+        <button class="view-button" id="masonryButton" data-view="masonry"><i class="fas fa-th"></i></button>
+        <button class="view-button active" id="gridButton" data-view="grid"><i class="fas fa-th-large"></i></button>
       </div>
       <div class="categories-container" id="categoriesContainer">
         <div class="category-tab active" data-category="todo">
-          <i class="fas fa-th"></i>
-          <span>Todo</span>
-          <div class="category-badge">12</div>
-        </div>
-        <div class="category-tab" data-category="gallos">
-          <i class="fas fa-star"></i>
-          <span>Gallos</span>
-          <div class="category-badge">5</div>
-        </div>
-        <div class="category-tab" data-category="eventos">
-          <i class="fas fa-calendar"></i>
-          <span>Eventos</span>
-          <div class="category-badge">3</div>
-        </div>
-        <div class="category-tab" data-category="criadero">
-          <i class="fas fa-home"></i>
-          <span>Criadero</span>
-          <div class="category-badge">2</div>
-        </div>
-        <div class="category-tab" data-category="competencias">
-          <i class="fas fa-trophy"></i>
-          <span>Competencias</span>
-          <div class="category-badge">1</div>
-        </div>
-        <div class="category-tab" data-category="clientes">
-          <i class="fas fa-users"></i>
-          <span>Clientes</span>
-          <div class="category-badge">1</div>
+          <i class="fas fa-spinner fa-spin"></i>
+          <span>Cargando...</span>
         </div>
       </div>
     </div>
+    
     <div class="gallery-content">
       <div class="gallery-grid grid-mode" id="galleryGrid">
+        <!-- Los medios se generarán aquí por JavaScript -->
       </div>
     </div>
   </section>
+
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal-content">
-      <button class="modal-close" id="modalClose">
-        <i class="fas fa-times"></i>
-      </button>
-      <button class="modal-nav prev" id="modalPrev">
-        <i class="fas fa-chevron-left"></i>
-      </button>
-      <button class="modal-nav next" id="modalNext">
-        <i class="fas fa-chevron-right"></i>
-      </button>
+      <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+      <button class="modal-nav prev" id="modalPrev"><i class="fas fa-chevron-left"></i></button>
+      <button class="modal-nav next" id="modalNext"><i class="fas fa-chevron-right"></i></button>
+      
       <div class="modal-image-container">
         <img class="modal-image" id="modalImage" src="" alt="" style="display: none;">
         <video class="modal-video" id="modalVideo" controls style="display: none;">
@@ -881,6 +789,7 @@ $logo_actual = $logo->obtenerLogoActivo();
           Tu navegador no soporta el elemento de video.
         </video>
       </div>
+      
       <div class="modal-info">
         <h2 class="modal-title" id="modalTitle"></h2>
         <p class="modal-description" id="modalDescription"></p>
@@ -897,17 +806,19 @@ $logo_actual = $logo->obtenerLogoActivo();
       </div>
     </div>
   </div>
+
+  <!-- FOOTER COMPLETO ORIGINAL -->
   <footer class="footer-container container-wide">
     <div class="container">
       <div class="footer-menu-wrapper">
         <nav class="footer-menu">
           <a href="#">Inicio</a>
           <a href="#">Nosotros</a>
-          <a href="#">Galería</a>
+          <a href="/galeria.php">Galería</a>
           <a href="#">Precios</a>
           <a href="#">Tienda</a>
           <a href="#">Blog</a>
-          <a href="/contacto.html">Contacto</a>
+          <a href="/contacto.php">Contacto</a>
         </nav>
       </div>
       <div class="footer-content">
@@ -946,7 +857,7 @@ $logo_actual = $logo->obtenerLogoActivo();
         <div class="footer-column">
           <div class="footer-logo-wrapper">
             <div class="footer-logo-center">
-              <img src="assets/images/logo.png" alt="Rancho Las Trojes Logo">
+              <img src="<?php echo $logo_actual; ?>" alt="Rancho Las Trojes Logo">
             </div>
             <div class="footer-logo-address">
               <p><i class="fas fa-map-marker-alt"></i>Estamos ubicados en Morelia, Michoacán</p>
@@ -987,160 +898,24 @@ $logo_actual = $logo->obtenerLogoActivo();
       </div>
     </div>
   </footer>
+  
   <script>
-    const mediaItems = [
-      {
-        id: '1',
-        type: 'photo',
-        url: 'https://granjalamanzana.com/9pdZ3R9P.jpg',
-        title: 'Gallo Kelso Campeón',
-        description: 'Nuestro mejor ejemplar de la línea Kelso, ganador de múltiples competencias.',
-        category: 'gallos',
-        likes: 127,
-        isLiked: true,
-        date: '2024-08-10',
-        location: 'Granja La Manzana'
-      },
-      {
-        id: '2',
-        type: 'video',
-        url: 'https://granjalamanzana.com/88I0BLoL.jpg',
-        videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
-        title: 'Entrenamiento Matutino',
-        description: 'Rutina diaria de ejercicio de nuestros gallos.',
-        category: 'criadero',
-        likes: 89,
-        isLiked: false,
-        duration: '2:34',
-        date: '2024-08-09'
-      },
-      {
-        id: '3',
-        type: 'photo',
-        url: 'https://granjalamanzana.com/6Bq51M4W.jpg',
-        title: 'Expo Tlaxcala 2024',
-        description: 'Participando en la exposición más importante del estado.',
-        category: 'eventos',
-        likes: 203,
-        isLiked: true,
-        date: '2024-08-05',
-        location: 'Centro de Exposiciones Tlaxcala'
-      },
-      {
-        id: '4',
-        type: 'story',
-        url: 'https://granjalamanzana.com/540UgeI9.jpg',
-        title: 'Cliente Satisfecho',
-        description: 'Don Roberto con su nueva adquisición.',
-        category: 'clientes',
-        likes: 45,
-        isLiked: false,
-        date: '2024-08-08'
-      },
-      {
-        id: '5',
-        type: 'photo',
-        url: 'https://granjalamanzana.com/1VW639Es.jpg',
-        title: 'Gallo Albany Pride',
-        description: 'Línea pura Albany, excelente para reproducción.',
-        category: 'gallos',
-        likes: 156,
-        isLiked: true,
-        date: '2024-08-07'
-      },
-      {
-        id: '6',
-        type: 'video',
-        url: 'https://granjalamanzana.com/6J94PkMi.jpg',
-        videoUrl: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
-        title: 'Competencia Regional',
-        description: 'Nuestros gallos en acción durante el torneo.',
-        category: 'competencias',
-        likes: 298,
-        isLiked: true,
-        duration: '5:12',
-        date: '2024-08-03'
-      },
-      {
-        id: '7',
-        type: 'photo',
-        url: 'https://granjalamanzana.com/9pdZ3R9P.jpg',
-        title: 'Línea Hatch Pura',
-        description: 'Ejemplares de primera calidad para cría.',
-        category: 'gallos',
-        likes: 98,
-        isLiked: false,
-        date: '2024-08-12',
-        location: 'Rancho Las Trojes'
-      },
-      {
-        id: '8',
-        type: 'photo',
-        url: 'https://granjalamanzana.com/88I0BLoL.jpg',
-        title: 'Festival Gallístico',
-        description: 'Gran evento anual en nuestra región.',
-        category: 'eventos',
-        likes: 234,
-        isLiked: true,
-        date: '2024-07-28',
-        location: 'Plaza de Toros'
-      },
-      {
-        id: '9',
-        type: 'photo',
-        url: 'https://granjalamanzana.com/6Bq51M4W.jpg',
-        title: 'Instalaciones del Criadero',
-        description: 'Nuestras modernas instalaciones para el cuidado de los gallos.',
-        category: 'criadero',
-        likes: 67,
-        isLiked: false,
-        date: '2024-08-01'
-      },
-      {
-        id: '10',
-        type: 'photo',
-        url: 'https://granjalamanzana.com/540UgeI9.jpg',
-        title: 'Gallo Sweater',
-        description: 'Línea Sweater de excelente genética.',
-        category: 'gallos',
-        likes: 145,
-        isLiked: true,
-        date: '2024-07-30'
-      },
-      {
-        id: '11',
-        type: 'photo',
-        url: 'https://granjalamanzana.com/1VW639Es.jpg',
-        title: 'Torneo Regional',
-        description: 'Participación exitosa en el torneo más importante.',
-        category: 'eventos',
-        likes: 189,
-        isLiked: true,
-        date: '2024-07-25',
-        location: 'Palenque Municipal'
-      },
-      {
-        id: '12',
-        type: 'photo',
-        url: 'https://granjalamanzana.com/6J94PkMi.jpg',
-        title: 'Gallo Grey',
-        description: 'Hermoso ejemplar de línea Grey.',
-        category: 'gallos',
-        likes: 112,
-        isLiked: false,
-        date: '2024-07-20'
-      }
-    ];
+    // --- VARIABLES GLOBALES ---
+    let mediaItems = [];
+    let allCategories = [];
     let currentView = 'grid';
     let currentCategory = 'todo';
     let currentSearch = '';
     let selectedMedia = null;
+
+    // --- REFERENCIAS AL DOM ---
     const searchInput = document.getElementById('searchInput');
     const searchClear = document.getElementById('searchClear');
     const masonryButton = document.getElementById('masonryButton');
     const gridButton = document.getElementById('gridButton');
     const galleryGrid = document.getElementById('galleryGrid');
     const categoriesContainer = document.getElementById('categoriesContainer');
+    
     const modalOverlay = document.getElementById('modalOverlay');
     const modalClose = document.getElementById('modalClose');
     const modalPrev = document.getElementById('modalPrev');
@@ -1154,22 +929,19 @@ $logo_actual = $logo->obtenerLogoActivo();
     const modalLikes = document.getElementById('modalLikes');
     const modalDate = document.getElementById('modalDate');
     const modalLocation = document.getElementById('modalLocation');
-    function formatDateToSpanish(dateString) {
-      const months = [
-        'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
-      ];
-      const date = new Date(dateString);
-      const day = date.getDate();
-      const month = months[date.getMonth()];
-      const year = date.getFullYear();
-      return `${day} de ${month} de ${year}`;
-    }
+
+    // --- INICIALIZACIÓN ---
     document.addEventListener('DOMContentLoaded', function() {
+      setupUI(); 
+      fetchDataAndRender(); 
+      setupGalleryListeners();
+    });
+
+    // --- LÓGICA UI ---
+    function setupUI() {
       const yearSpan = document.getElementById('current-year');
-      if (yearSpan) {
-        yearSpan.textContent = new Date().getFullYear();
-      }
+      if (yearSpan) yearSpan.textContent = new Date().getFullYear();
+
       const themeToggle = document.getElementById('themeToggle');
       const darkModeStylesheet = document.getElementById('darkModeStylesheet');
       if (themeToggle && darkModeStylesheet) {
@@ -1196,6 +968,7 @@ $logo_actual = $logo->obtenerLogoActivo();
           }
         });
       }
+
       const originalHamburger = document.getElementById('hamburgerButton');
       const navMenuOverlay = document.getElementById('navMenuOverlay');
       if (originalHamburger && navMenuOverlay) {
@@ -1265,111 +1038,99 @@ $logo_actual = $logo->obtenerLogoActivo();
           }
         });
       }
-      updateCategoryCounts();
-      renderGallery();
-      setupEventListeners();
-      setTimeout(preloadImages, 1000);
-    });
-    function setupEventListeners() {
-      searchInput.addEventListener('input', handleSearch);
-      searchClear.addEventListener('click', clearSearch);
-      masonryButton.addEventListener('click', () => switchView('masonry'));
-      gridButton.addEventListener('click', () => switchView('grid'));
-      categoriesContainer.addEventListener('click', handleCategoryClick);
-      modalClose.addEventListener('click', closeModal);
-      modalPrev.addEventListener('click', () => navigateModal(-1));
-      modalNext.addEventListener('click', () => navigateModal(1));
-      modalOverlay.addEventListener('click', handleModalClick);
-      modalLikeButton.addEventListener('click', toggleLike);
-      document.addEventListener('keydown', handleKeyPress);
     }
-    function handleSearch() {
-      currentSearch = searchInput.value.toLowerCase();
-      searchClear.style.display = currentSearch ? 'block' : 'none';
-      renderGallery();
-    }
-    function clearSearch() {
-      searchInput.value = '';
-      currentSearch = '';
-      searchClear.style.display = 'none';
-      renderGallery();
-    }
-    function switchView(view) {
-      if (currentView === view) return;
-      currentView = view;
-      document.querySelectorAll('.view-button').forEach(btn => btn.classList.remove('active'));
-      document.getElementById(view + 'Button').classList.add('active');
-      galleryGrid.className = `gallery-grid ${view}-mode`;
-      renderGallery();
-    }
-    function handleCategoryClick(e) {
-      const categoryTab = e.target.closest('.category-tab');
-      if (!categoryTab) return;
-      const category = categoryTab.dataset.category;
-      if (currentCategory === category) return;
-      currentCategory = category;
-      document.querySelectorAll('.category-tab').forEach(tab => tab.classList.remove('active'));
-      categoryTab.classList.add('active');
-      renderGallery();
-    }
-    function updateCategoryCounts() {
-      const counts = {
-        todo: mediaItems.length,
-        gallos: mediaItems.filter(item => item.category === 'gallos').length,
-        eventos: mediaItems.filter(item => item.category === 'eventos').length,
-        criadero: mediaItems.filter(item => item.category === 'criadero').length,
-        competencias: mediaItems.filter(item => item.category === 'competencias').length,
-        clientes: mediaItems.filter(item => item.category === 'clientes').length
-      };
-      document.querySelectorAll('.category-tab').forEach(tab => {
-        const category = tab.dataset.category;
-        const badge = tab.querySelector('.category-badge');
-        if (badge && counts[category] !== undefined) {
-          badge.textContent = counts[category];
-        }
-      });
-    }
-    function filterMedia() {
-      let filtered = currentCategory === 'todo' 
-        ? [...mediaItems] 
-        : mediaItems.filter(item => item.category === currentCategory);
-      if (currentSearch) {
-        filtered = filtered.filter(item => 
-          item.title.toLowerCase().includes(currentSearch) || 
-          (item.description && item.description.toLowerCase().includes(currentSearch))
-        );
+
+    // --- API Y DATOS ---
+    async function fetchDataAndRender() {
+      try {
+        const response = await fetch('api/galeria.php');
+        if (!response.ok) throw new Error('Error HTTP');
+        const data = await response.json();
+
+        mediaItems = data.medios || [];
+        allCategories = data.categorias || [];
+
+        renderCategories();
+        renderGallery();
+
+      } catch (error) {
+        console.error("Error cargando galería:", error);
+        galleryGrid.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>Error al cargar la galería. Intenta recargar.</p></div>`;
       }
-      return filtered;
     }
-    function renderGallery() {
-      const filteredItems = filterMedia();
-      if (filteredItems.length === 0) {
-        galleryGrid.innerHTML = `
-          <div class="empty-state">
-            <i class="fas fa-images"></i>
-            <div class="empty-state-text">No se encontraron resultados</div>
+
+    function renderCategories() {
+      let html = `<div class="category-tab active" data-category="todo"><i class="fas fa-th"></i><span>Todo</span><div class="category-badge">${mediaItems.length}</div></div>`;
+      
+      allCategories.forEach(cat => {
+        // USAMOS EL SLUG QUE VIENE DEL BACKEND (Modelo Categoria.php)
+        const key = cat.slug; 
+        html += `
+          <div class="category-tab" data-category="${key}">
+            <i class="${cat.icono || 'fas fa-folder'}"></i>
+            <span>${cat.nombre}</span>
+            <div class="category-badge" id="badge-${key}">0</div>
           </div>
         `;
+      });
+      categoriesContainer.innerHTML = html;
+      
+      // Calcular contadores
+      updateCategoryCounts();
+    }
+
+    function updateCategoryCounts() {
+        allCategories.forEach(cat => {
+            const key = cat.slug;
+            // Comparamos el slug de la categoría con la 'category' del medio (que también es slug desde backend)
+            const count = mediaItems.filter(m => m.category === key).length;
+            const badge = document.getElementById(`badge-${key}`);
+            if(badge) badge.textContent = count;
+        });
+    }
+
+    function renderGallery() {
+      const filtered = filterMedia();
+      
+      if (filtered.length === 0) {
+        galleryGrid.innerHTML = `<div class="empty-state"><i class="fas fa-search"></i><p>No hay resultados.</p></div>`;
         return;
       }
-      const itemsHTML = filteredItems.map((item, index) => {
+
+      const html = filtered.map(item => {
         const itemClass = `gallery-item ${currentView}-item`;
+        
+        let mediaHtml = '';
+        if (item.type === 'video') {
+            const posterAttr = item.thumbnail ? `poster="${item.thumbnail}"` : '';
+            const srcUrl = item.thumbnail ? item.url : `${item.url}#t=0.5`;
+            
+            mediaHtml = `
+                <video 
+                    src="${srcUrl}" 
+                    ${posterAttr}
+                    class="gallery-item-image" 
+                    muted 
+                    playsinline 
+                    loop
+                    preload="metadata"
+                    onmouseover="this.play()" 
+                    onmouseout="this.pause();this.currentTime=0;"
+                    style="background-color: #000;"
+                ></video>
+            `;
+        } else {
+            mediaHtml = `<img src="${item.url}" alt="${item.title}" class="gallery-item-image" loading="lazy">`;
+        }
+
         return `
           <div class="${itemClass}" data-id="${item.id}" onclick="openModal('${item.id}')">
-            <img src="${item.url}" alt="${item.title}" class="gallery-item-image" loading="lazy">
+            ${mediaHtml}
+            
             <div class="gallery-item-indicators">
-              ${item.type === 'video' ? `
-                <div class="media-indicator">
-                  <i class="fas fa-play"></i>
-                  ${item.duration || ''}
-                </div>
-              ` : ''}
-              ${item.type === 'story' ? `
-                <div class="media-indicator">
-                  <i class="fas fa-bolt"></i>
-                </div>
-              ` : ''}
+              ${item.type === 'video' ? '<div class="media-indicator"><i class="fas fa-play"></i></div>' : ''}
             </div>
+            
             <div class="gallery-item-overlay">
               <h3 class="gallery-item-title">${item.title}</h3>
               <div class="gallery-item-meta">
@@ -1377,91 +1138,151 @@ $logo_actual = $logo->obtenerLogoActivo();
                   <i class="fas fa-heart" style="color: ${item.isLiked ? '#ff3040' : '#fff'}"></i>
                   <span>${item.likes}</span>
                 </div>
-                ${item.location ? `
-                  <div class="location-text">
-                    <i class="fas fa-map-marker-alt"></i> ${item.location}
-                  </div>
-                ` : ''}
+                ${item.location ? `<div class="location-text"><i class="fas fa-map-marker-alt"></i> ${item.location}</div>` : ''}
               </div>
             </div>
           </div>
         `;
       }).join('');
-      galleryGrid.innerHTML = itemsHTML;
+      
+      galleryGrid.innerHTML = html;
     }
-    function openModal(itemId) {
-      selectedMedia = mediaItems.find(item => item.id === itemId);
-      if (!selectedMedia) return;
+
+    function filterMedia() {
+      // FILTRADO POR SLUG EXACTO
+      let list = currentCategory === 'todo' ? mediaItems : mediaItems.filter(m => m.category === currentCategory);
+      if(currentSearch) {
+        const s = currentSearch.toLowerCase();
+        list = list.filter(m => m.title.toLowerCase().includes(s) || m.description.toLowerCase().includes(s));
+      }
+      return list;
+    }
+
+    // --- EVENTOS ---
+    function setupGalleryListeners() {
+      searchInput.addEventListener('input', (e) => {
+        currentSearch = e.target.value;
+        searchClear.style.display = currentSearch ? 'block' : 'none';
+        renderGallery();
+      });
+      
+      searchClear.addEventListener('click', () => {
+        searchInput.value = ''; currentSearch = ''; 
+        searchClear.style.display = 'none'; renderGallery();
+      });
+
+      masonryButton.addEventListener('click', () => { switchView('masonry'); });
+      gridButton.addEventListener('click', () => { switchView('grid'); });
+
+      categoriesContainer.addEventListener('click', (e) => {
+        const tab = e.target.closest('.category-tab');
+        if(!tab) return;
+        document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentCategory = tab.dataset.category;
+        renderGallery();
+      });
+
+      modalClose.addEventListener('click', closeModal);
+      modalPrev.addEventListener('click', () => navigateModal(-1));
+      modalNext.addEventListener('click', () => navigateModal(1));
+      modalOverlay.addEventListener('click', (e) => { if(e.target === modalOverlay) closeModal(); });
+      modalLikeButton.addEventListener('click', toggleLike);
+      
+      document.addEventListener('keydown', (e) => {
+        if(!modalOverlay.classList.contains('active')) return;
+        if(e.key === 'Escape') closeModal();
+        if(e.key === 'ArrowLeft') navigateModal(-1);
+        if(e.key === 'ArrowRight') navigateModal(1);
+      });
+    }
+
+    function switchView(view) {
+        currentView = view;
+        document.querySelectorAll('.view-button').forEach(b => b.classList.remove('active'));
+        document.getElementById(view + 'Button').classList.add('active');
+        galleryGrid.className = `gallery-grid ${view}-mode`;
+        renderGallery();
+    }
+
+    // --- MODAL ---
+    function openModal(id) {
+      selectedMedia = mediaItems.find(m => m.id == id);
+      if(!selectedMedia) return;
+
       modalTitle.textContent = selectedMedia.title;
-      modalDescription.textContent = selectedMedia.description || '';
+      modalDescription.textContent = selectedMedia.description;
       modalLikes.textContent = selectedMedia.likes;
       modalDate.textContent = formatDateToSpanish(selectedMedia.date);
-      modalLocation.textContent = selectedMedia.location ? `📍 ${selectedMedia.location}` : '';
-      const heartIcon = modalLikeButton.querySelector('i');
-      heartIcon.style.color = selectedMedia.isLiked ? '#ff3040' : '#fff';
-      if (selectedMedia.type === 'video') {
+      modalLocation.textContent = selectedMedia.location || '';
+      modalLikeButton.querySelector('i').style.color = selectedMedia.isLiked ? '#ff3040' : '#fff';
+
+      if(selectedMedia.type === 'video') {
         modalImage.style.display = 'none';
         modalVideo.style.display = 'block';
-        modalVideoSource.src = selectedMedia.videoUrl || selectedMedia.url;
+        const cleanUrl = selectedMedia.url.split('#')[0];
+        modalVideoSource.src = cleanUrl;
+        if (selectedMedia.thumbnail) modalVideo.poster = selectedMedia.thumbnail;
         modalVideo.load();
+        modalVideo.play();
       } else {
         modalVideo.style.display = 'none';
+        modalVideo.pause();
         modalImage.style.display = 'block';
         modalImage.src = selectedMedia.url;
-        modalImage.alt = selectedMedia.title;
       }
+      
       modalOverlay.classList.add('active');
       document.body.style.overflow = 'hidden';
     }
+
     function closeModal() {
       modalOverlay.classList.remove('active');
       document.body.style.overflow = '';
-      selectedMedia = null;
+      modalVideo.pause();
     }
-    function handleModalClick(e) {
-      if (e.target === modalOverlay) {
-        closeModal();
-      }
+
+    function navigateModal(dir) {
+        if(!selectedMedia) return;
+        const list = filterMedia();
+        const idx = list.findIndex(m => m.id == selectedMedia.id);
+        let newIdx = idx + dir;
+        if(newIdx < 0) newIdx = list.length - 1;
+        if(newIdx >= list.length) newIdx = 0;
+        openModal(list[newIdx].id);
     }
-    function toggleLike() {
-      if (!selectedMedia) return;
+
+    function formatDateToSpanish(dateString) {
+      if (!dateString) return '';
+      const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+      const date = new Date(dateString);
+      return `${date.getUTCDate()} de ${months[date.getUTCMonth()]} de ${date.getUTCFullYear()}`;
+    }
+
+    async function toggleLike() {
+      if(!selectedMedia) return;
+      
       selectedMedia.isLiked = !selectedMedia.isLiked;
       selectedMedia.likes += selectedMedia.isLiked ? 1 : -1;
+      
       modalLikes.textContent = selectedMedia.likes;
-      const heartIcon = modalLikeButton.querySelector('i');
-      heartIcon.style.color = selectedMedia.isLiked ? '#ff3040' : '#fff';
-      const galleryItem = document.querySelector(`[data-id="${selectedMedia.id}"]`);
-      if (galleryItem) {
-        const heartInGallery = galleryItem.querySelector('.likes-container i');
-        const likesInGallery = galleryItem.querySelector('.likes-container span');
-        if (heartInGallery) heartInGallery.style.color = selectedMedia.isLiked ? '#ff3040' : '#fff';
-        if (likesInGallery) likesInGallery.textContent = selectedMedia.likes;
+      modalLikeButton.querySelector('i').style.color = selectedMedia.isLiked ? '#ff3040' : '#fff';
+      
+      renderGallery(); 
+
+      try {
+        await fetch('api/actualizar_likes.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                id: selectedMedia.id,
+                likes: selectedMedia.likes,
+                isLiked: selectedMedia.isLiked
+            })
+        });
+      } catch (e) {
+        console.error("Error actualizando like", e);
       }
-    }
-    function handleKeyPress(e) {
-      if (!modalOverlay.classList.contains('active')) return;
-      if (e.key === 'Escape') {
-        closeModal();
-      } else if (e.key === 'ArrowLeft') {
-        navigateModal(-1);
-      } else if (e.key === 'ArrowRight') {
-        navigateModal(1);
-      }
-    }
-    function navigateModal(direction) {
-      if (!selectedMedia) return;
-      const filteredItems = filterMedia();
-      const currentIndex = filteredItems.findIndex(item => item.id === selectedMedia.id);
-      let newIndex = currentIndex + direction;
-      if (newIndex < 0) newIndex = filteredItems.length - 1;
-      if (newIndex >= filteredItems.length) newIndex = 0;
-      openModal(filteredItems[newIndex].id);
-    }
-    function preloadImages() {
-      mediaItems.forEach(item => {
-        const img = new Image();
-        img.src = item.url;
-      });
     }
   </script>
 </body>

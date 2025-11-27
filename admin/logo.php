@@ -49,28 +49,32 @@ $logo_actual = $logo->obtenerLogoActivo();
     </div>
     <?php endif; ?>
 
-    <div class="logo-card">
-        <div class="current-logo">
-            <h3>Logo Actual</h3>
-            <div class="logo-preview">
-                <img src="../<?php echo $logo_actual; ?>" alt="Logo Actual">
+    <div class="management-grid">
+        <div class="logo-card">
+            <div class="current-logo">
+                <h3 class="section-title">Logo Actual</h3>
+                <div class="logo-preview">
+                    <img src="../<?php echo $logo_actual; ?>" alt="Logo Actual">
+                </div>
             </div>
         </div>
 
-        <div class="logo-upload">
-            <h3>Subir Nuevo Logo</h3>
-            <form method="POST" enctype="multipart/form-data" class="logo-form">      
-                <div class="form-group">
-                    <label for="logo" class="form-label">Subir Nuevo Logo *</label>
-                    <input type="file" id="logo" name="logo" class="form-control" 
-                        accept=".jpg,.jpeg,.png,.gif,.webp" required>
-                    <div class="form-text">Formatos permitidos: JPG, PNG, GIF, WebP. Tamaño máximo: 5MB</div>
-                </div>
-                
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-upload"></i> Subir Logo
-                </button>
-            </form>
+        <div class="logo-card">
+            <div class="logo-upload">
+                <h3 class="section-title"s>Subir Nuevo Logo</h3>
+                <form method="POST" enctype="multipart/form-data" class="logo-form">      
+                    <div class="form-group">
+                        <label for="logo" class="form-label">Subir Nuevo Logo *</label>
+                        <input type="file" id="logo" name="logo" class="form-control" 
+                            accept=".jpg,.jpeg,.png,.gif,.webp" required>
+                        <div class="form-text">Formatos permitidos: JPG, PNG, GIF, WebP. Tamaño máximo: 5MB</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Subir Logo
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 </div>

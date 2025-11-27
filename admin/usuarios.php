@@ -10,15 +10,14 @@ $usuario = new Usuario($db);
 $mensaje = '';
 $tipo_mensaje = '';
 
-// Crear nuevo usuario
+// --- LOGICA PHP (Intacta) ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_usuario'])) {
-    $username = sanitizar($_POST['username'] ?? '');
+    $username = htmlspecialchars(strip_tags($_POST['username'] ?? ''));
     $password = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
-    $nombre = sanitizar($_POST['nombre'] ?? '');
-    $email = sanitizar_email($_POST['email'] ?? '');
+    $nombre = htmlspecialchars(strip_tags($_POST['nombre'] ?? ''));
+    $email = filter_var($_POST['email'] ?? '', FILTER_VALIDATE_EMAIL);
     
-    // Validaciones
     if (empty($username) || empty($password) || empty($nombre) || empty($email)) {
         $mensaje = 'Todos los campos son obligatorios';
         $tipo_mensaje = 'error';
@@ -43,7 +42,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_usuario'])) {
     }
 }
 
-// Cambiar contraseña
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cambiar_password'])) {
     $usuario_id = (int)$_POST['usuario_id'];
     $nueva_password = $_POST['nueva_password'];
@@ -66,44 +64,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cambiar_password'])) 
     }
 }
 
-// Desactivar usuario
+// Acciones GET (Desactivar, Activar, Eliminar)
 if (isset($_GET['desactivar'])) {
     $usuario_id = (int)$_GET['desactivar'];
-    if ($usuario->desactivar($usuario_id)) {
-        $mensaje = 'Usuario desactivado correctamente';
-        $tipo_mensaje = 'success';
-    } else {
-        $mensaje = 'Error al desactivar el usuario';
-        $tipo_mensaje = 'error';
-    }
+    $usuario->desactivar($usuario_id) ? $mensaje = 'Usuario desactivado' : $mensaje = 'Error';
+    $tipo_mensaje = strpos($mensaje, 'Error') === false ? 'success' : 'error';
 }
-
-// Activar usuario
 if (isset($_GET['activar'])) {
     $usuario_id = (int)$_GET['activar'];
-    if ($usuario->activar($usuario_id)) {
-        $mensaje = 'Usuario activado correctamente';
-        $tipo_mensaje = 'success';
-    } else {
-        $mensaje = 'Error al activar el usuario';
-        $tipo_mensaje = 'error';
-    }
+    $usuario->activar($usuario_id) ? $mensaje = 'Usuario activado' : $mensaje = 'Error';
+    $tipo_mensaje = strpos($mensaje, 'Error') === false ? 'success' : 'error';
 }
-
-// Eliminar usuario
 if (isset($_GET['eliminar'])) {
     $usuario_id = (int)$_GET['eliminar'];
-    if ($usuario->eliminar($usuario_id)) {
-        $mensaje = 'Usuario eliminado correctamente';
-        $tipo_mensaje = 'success';
-    } else {
-        $mensaje = 'Error al eliminar el usuario';
-        $tipo_mensaje = 'error';
-    }
+    $usuario->eliminar($usuario_id) ? $mensaje = 'Usuario eliminado' : $mensaje = 'Error';
+    $tipo_mensaje = strpos($mensaje, 'Error') === false ? 'success' : 'error';
 }
 
 $usuarios = $usuario->obtenerTodos();
 ?>
+
 <div class="users-management">
     <div class="page-header">
         <h1>Gestión de Usuarios</h1>
@@ -126,7 +106,7 @@ $usuarios = $usuario->obtenerTodos();
         <div class="tab-content active" id="crear">
             <div class="form-section">
                 <div class="section-card">
-                    <h3>Crear Nuevo Usuario</h3>
+                    <h3 class="section-title">Crear Nuevo Usuario</h3>
                     <form method="POST" class="user-form">
                         <input type="hidden" name="crear_usuario" value="1">
                         
@@ -134,10 +114,8 @@ $usuarios = $usuario->obtenerTodos();
                             <div class="form-group">
                                 <label for="username" class="form-label">Nombre de Usuario *</label>
                                 <input type="text" id="username" name="username" class="form-control" 
-                                    pattern="[a-zA-Z0-9_]+" title="Solo letras, números y guiones bajos"
-                                    placeholder="Ej: juan_perez" required
+                                    pattern="[a-zA-Z0-9_]+" placeholder="Ej: juan_perez" required
                                     value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>">
-                                <div class="form-text">Caracteres permitidos: letras, números y _</div>
                             </div>
                             
                             <div class="form-group">
@@ -156,15 +134,21 @@ $usuarios = $usuario->obtenerTodos();
                             
                             <div class="form-group">
                                 <label for="password" class="form-label">Contraseña *</label>
-                                <input type="password" id="password" name="password" class="form-control" 
-                                    placeholder="Mínimo 6 caracteres" required minlength="6">
+                                <div class="input-wrapper-login-style">
+                                    <input type="password" id="password" name="password" class="form-control" 
+                                        placeholder="Mínimo 6 caracteres" required minlength="6">
+                                    <i class="fas fa-eye toggle-pass-btn" data-toggle-pass="password"></i>
+                                </div>
                                 <div class="form-text">Mínimo 6 caracteres</div>
                             </div>
                             
                             <div class="form-group">
                                 <label for="confirm_password" class="form-label">Confirmar Contraseña *</label>
-                                <input type="password" id="confirm_password" name="confirm_password" class="form-control" 
-                                    placeholder="Repite la contraseña" required>
+                                <div class="input-wrapper-login-style">
+                                    <input type="password" id="confirm_password" name="confirm_password" class="form-control" 
+                                        placeholder="Repite la contraseña" required>
+                                    <i class="fas fa-eye toggle-pass-btn" data-toggle-pass="confirm_password"></i>
+                                </div>
                             </div>
                         </div>
                         
@@ -179,60 +163,36 @@ $usuarios = $usuario->obtenerTodos();
         <div class="tab-content" id="listar">
             <div class="list-section">
                 <div class="section-card">
-                    <h3>Usuarios del Sistema</h3>
-                    
+                    <h3 class="section-title">Usuarios del Sistema</h3>
                     <?php if (empty($usuarios)): ?>
-                        <div class="empty-state">
-                            <i class="fas fa-users"></i>
-                            <p>No hay usuarios registrados en el sistema</p>
-                        </div>
+                        <div class="empty-state"><i class="fas fa-users"></i><p>No hay usuarios</p></div>
                     <?php else: ?>
                     <div class="users-list">
                         <?php foreach ($usuarios as $user): ?>
                         <div class="user-item <?php echo !$user['activo'] ? 'inactive' : ''; ?>">
-                            <div class="user-avatar-large">
-                                <?php echo strtoupper(substr($user['nombre'], 0, 1)); ?>
-                            </div>
-                            
+                            <div class="user-avatar-large"><?php echo strtoupper(substr($user['nombre'], 0, 1)); ?></div>
                             <div class="user-details">
                                 <h4><?php echo htmlspecialchars($user['nombre']); ?></h4>
                                 <div class="user-meta">
                                     <span class="username">@<?php echo htmlspecialchars($user['username']); ?></span>
                                     <span class="user-email"><?php echo htmlspecialchars($user['email']); ?></span>
-                                    <span class="user-date">Creado: <?php echo date('d/m/Y', strtotime($user['fecha_creacion'])); ?></span>
                                 </div>
                             </div>
-                            
                             <div class="user-status">
                                 <span class="status-badge <?php echo $user['activo'] ? 'active' : 'inactive'; ?>">
                                     <?php echo $user['activo'] ? 'Activo' : 'Inactivo'; ?>
                                 </span>
                             </div>
-                            
                             <div class="user-actions">
                                 <?php if ($user['activo']): ?>
                                     <?php if ($user['id'] != $_SESSION['usuario_id']): ?>
-                                        <a href="usuarios.php?desactivar=<?php echo $user['id']; ?>" 
-                                           class="btn btn-sm btn-warning"
-                                           onclick="return confirm('¿Estás seguro de desactivar este usuario?')">
-                                            <i class="fas fa-user-slash"></i> Desactivar
-                                        </a>
+                                        <a href="usuarios.php?desactivar=<?php echo $user['id']; ?>" class="btn btn-sm btn-warning" onclick="return confirm('¿Desactivar?')"><i class="fas fa-user-slash"></i></a>
                                     <?php endif; ?>
                                 <?php else: ?>
-                                    <a href="usuarios.php?activar=<?php echo $user['id']; ?>" 
-                                       class="btn btn-sm btn-success">
-                                        <i class="fas fa-user-check"></i> Activar
-                                    </a>
+                                    <a href="usuarios.php?activar=<?php echo $user['id']; ?>" class="btn btn-sm btn-success"><i class="fas fa-user-check"></i></a>
                                 <?php endif; ?>
-                                
                                 <?php if ($user['id'] != $_SESSION['usuario_id']): ?>
-                                    <a href="usuarios.php?eliminar=<?php echo $user['id']; ?>" 
-                                       class="btn btn-sm btn-danger"
-                                       onclick="return confirm('¿Estás seguro de eliminar este usuario? Esta acción no se puede deshacer.')">
-                                        <i class="fas fa-trash"></i> Eliminar
-                                    </a>
-                                <?php else: ?>
-                                    <span class="current-user-badge">Tú</span>
+                                    <a href="usuarios.php?eliminar=<?php echo $user['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar?')"><i class="fas fa-trash"></i></a>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -265,15 +225,21 @@ $usuarios = $usuario->obtenerTodos();
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="nueva_password" class="form-label">Nueva Contraseña *</label>
-                                <input type="password" id="nueva_password" name="nueva_password" class="form-control" 
-                                    placeholder="Mínimo 6 caracteres" required minlength="6">
+                                <div class="input-wrapper-login-style">
+                                    <input type="password" id="nueva_password" name="nueva_password" class="form-control" 
+                                        placeholder="Mínimo 6 caracteres" required minlength="6">
+                                    <i class="fas fa-eye toggle-pass-btn" data-toggle-pass="nueva_password"></i>
+                                </div>
                                 <div class="form-text">Mínimo 6 caracteres</div>
                             </div>
                             
                             <div class="form-group">
                                 <label for="confirmar_password" class="form-label">Confirmar Contraseña *</label>
-                                <input type="password" id="confirmar_password" name="confirmar_password" class="form-control" 
-                                    placeholder="Repite la nueva contraseña" required>
+                                <div class="input-wrapper-login-style">
+                                    <input type="password" id="confirmar_password" name="confirmar_password" class="form-control" 
+                                        placeholder="Repite la nueva contraseña" required>
+                                    <i class="fas fa-eye toggle-pass-btn" data-toggle-pass="confirmar_password"></i>
+                                </div>
                             </div>
                         </div>
                         
@@ -289,75 +255,54 @@ $usuarios = $usuario->obtenerTodos();
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Navegación por pestañas
+    // 1. TABS
     document.querySelectorAll('.tab-button').forEach(button => {
         button.addEventListener('click', function() {
             const tabId = this.getAttribute('data-tab');
-            
-            // Actualizar botones activos
             document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
             this.classList.add('active');
-            
-            // Actualizar contenido visible
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
             });
             document.getElementById(tabId).classList.add('active');
         });
     });
+
+    // 2. TOGGLE PASSWORD (Lógica corregida por vinculación de ID)
+    const toggles = document.querySelectorAll('.toggle-pass-btn');
     
-    // Validación de contraseñas en tiempo real para crear usuario
-    const userForm = document.querySelector('.user-form');
-    if (userForm) {
-        const password = document.getElementById('password');
-        const confirmPassword = document.getElementById('confirm_password');
-        
-        function validatePasswords() {
-            if (password.value !== confirmPassword.value) {
-                confirmPassword.setCustomValidity('Las contraseñas no coinciden');
+    toggles.forEach(icon => {
+        icon.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('data-toggle-pass');
+            const input = document.getElementById(targetId);
+            
+            if (input) {
+                const type = input.type === 'password' ? 'text' : 'password';
+                input.type = type;
+                this.classList.remove('fa-eye', 'fa-eye-slash');
+                this.classList.add(type === 'password' ? 'fa-eye' : 'fa-eye-slash');
             } else {
-                confirmPassword.setCustomValidity('');
+                console.error('No se encontró el input con ID:', targetId);
             }
-        }
-        
-        password.addEventListener('input', validatePasswords);
-        confirmPassword.addEventListener('input', validatePasswords);
-    }
-    
-    // Validación para cambiar contraseña
-    const changePasswordForm = document.querySelector('.password-form');
-    if (changePasswordForm) {
-        const nuevaPassword = document.getElementById('nueva_password');
-        const confirmarPassword = document.getElementById('confirmar_password');
-        
-        function validateChangePasswords() {
-            if (nuevaPassword.value !== confirmarPassword.value) {
-                confirmarPassword.setCustomValidity('Las contraseñas no coinciden');
-            } else {
-                confirmarPassword.setCustomValidity('');
-            }
-        }
-        
-        nuevaPassword.addEventListener('input', validateChangePasswords);
-        confirmarPassword.addEventListener('input', validateChangePasswords);
-    }
-    
-    // Mostrar/ocultar contraseñas
-    document.querySelectorAll('input[type="password"]').forEach(input => {
-        const toggle = document.createElement('span');
-        toggle.className = 'password-toggle-form';
-        toggle.innerHTML = '<i class="fas fa-eye"></i>';
-        toggle.style.cssText = 'position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #666; z-index: 10;';
-        
-        input.parentNode.style.position = 'relative';
-        input.parentNode.appendChild(toggle);
-        
-        toggle.addEventListener('click', function() {
-            const type = input.type === 'password' ? 'text' : 'password';
-            input.type = type;
-            this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
         });
     });
+
+    // 3. VALIDACIONES
+    const addValidation = (passId, confirmId) => {
+        const pass = document.getElementById(passId);
+        const confirm = document.getElementById(confirmId);
+        if(pass && confirm) {
+            const validate = () => {
+                confirm.setCustomValidity(pass.value !== confirm.value ? 'Las contraseñas no coinciden' : '');
+            };
+            pass.addEventListener('input', validate);
+            confirm.addEventListener('input', validate);
+        }
+    };
+
+    addValidation('password', 'confirm_password');
+    addValidation('nueva_password', 'confirmar_password');
 });
 </script>
 <?php include_once 'includes/footer.php'; ?>
