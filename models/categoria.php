@@ -29,11 +29,34 @@ class Categoria {
                 "id" => $row['id'],
                 "nombre" => $row['nombre'],
                 "icono" => $row['icono'],
-                "cantidad_medios" => $row['cantidad_medios']
+                "cantidad_medios" => $row['cantidad_medios'],
+                // GENERAMOS EL SLUG AQUÍ PARA QUE COINCIDA EXACTAMENTE CON LOS MEDIOS
+                "slug" => $this->generarSlug($row['nombre'])
             );
             array_push($categorias_arr, $categoria_item);
         }
         return $categorias_arr;
+    }
+
+    // Función helper para generar slugs limpios (Igual que en Medio.php)
+    private function generarSlug($nombre) {
+        if (empty($nombre)) return 'sin-categoria';
+        
+        // 1. Convertir a minúsculas
+        $slug = mb_strtolower($nombre, 'UTF-8');
+        
+        // 2. Reemplazar caracteres acentuados
+        $buscar = array('á', 'é', 'í', 'ó', 'ú', 'ñ', 'ü');
+        $reemplazar = array('a', 'e', 'i', 'o', 'u', 'n', 'u');
+        $slug = str_replace($buscar, $reemplazar, $slug);
+        
+        // 3. Reemplazar espacios y caracteres no alfanuméricos por guiones
+        $slug = preg_replace('/[^a-z0-9]+/', '-', $slug);
+        
+        // 4. Eliminar guiones al inicio y final
+        $slug = trim($slug, '-');
+        
+        return $slug;
     }
 
     public function crear() {

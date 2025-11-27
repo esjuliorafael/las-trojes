@@ -64,7 +64,7 @@ $categorias = $categoria->obtenerTodas();
     <div class="management-grid">
         <div class="form-section">
             <div class="section-card">
-                <h3>Crear Nueva Categoría</h3>
+                <h3 class="section-title">Crear Nueva Categoría</h3>
                 <form method="POST" class="category-form">
                     <input type="hidden" name="crear_categoria" value="1">
                     
@@ -94,7 +94,7 @@ $categorias = $categoria->obtenerTodas();
 
         <div class="list-section">
             <div class="section-card">
-                <h3>Categorías Existentes</h3>
+                <h3 class="section-title">Categorías Existentes</h3>
                 
                 <div class="categories-list">
                     <?php foreach ($categorias as $cat): ?>
@@ -109,7 +109,7 @@ $categorias = $categoria->obtenerTodas();
                             </div>
                         </div>
                         <div class="category-actions">
-                            <a href="categorias.php?editar=<?php echo $cat['id']; ?>" class="btn btn-sm">
+                            <a href="categorias.php?editar=<?php echo $cat['id']; ?>" class="btn btn-sm btn-secondary">
                                 <i class="fas fa-edit"></i>
                             </a>
                             <a href="categorias.php?eliminar=<?php echo $cat['id']; ?>" 
