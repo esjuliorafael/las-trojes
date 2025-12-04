@@ -54,7 +54,7 @@ $categorias = $categoria->obtenerTodas();
         <h1>Gestión de Categorías</h1>
         <p>Administra las categorías de la galería</p>
     </div>
-
+|1
     <?php if ($mensaje): ?>
     <div class="alert alert-<?php echo $tipo_mensaje; ?>">
         <?php echo $mensaje; ?>

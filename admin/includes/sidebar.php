@@ -32,7 +32,11 @@
             <div class="menu-group-title">Tienda</div>
             <a href="tienda.php" class="menu-item <?php echo basename($_SERVER['PHP_SELF']) == 'tienda.php' ? 'active' : ''; ?>">
                 <i class="fas fa-store"></i>
-                Productos / Aves
+                Productos
+            </a>
+            <a href="ordenes.php" class="menu-item <?php echo basename($_SERVER['PHP_SELF']) == 'categorias.php' ? 'active' : ''; ?>">
+                <i class="fas fa-tags"></i>
+                Órdenes
             </a>
         </div>
         
@@ -49,6 +53,10 @@
             <a href="usuarios.php" class="menu-item <?php echo basename($_SERVER['PHP_SELF']) == 'usuarios.php' ? 'active' : ''; ?>">
                 <i class="fas fa-users"></i>
                 Usuarios
+            </a>
+            <a href="envios.php" class="menu-item <?php echo basename($_SERVER['PHP_SELF']) == 'envios.php' ? 'active' : ''; ?>">
+                <i class="fas fa-tags"></i>
+                Envíos
             </a>
         </div>
     </div>

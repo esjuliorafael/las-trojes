@@ -237,45 +237,7 @@ $logo_actual = $logo->obtenerLogoActivo();
   </style>
 </head>
 <body>
-  <header>
-    <div class="container-wide">
-      <div class="header-wrapper">
-        <div class="logo-container">
-          <div class="logo-circle"></div>
-          <div class="logo">
-            <img src="<?php echo $logo_actual; ?>" alt="Rancho Las Trojes Logo">
-          </div>
-        </div>
-         <div class="header-group">
-          <div class="header-actions">
-            <a href="#" id="themeToggle" class="btn-icon" aria-label="Cambiar tema">
-              <i class="fa-solid fa-moon"></i>
-            </a>
-            <a href="/contacto.php" class="btn-text">
-              <i class="fa-solid fa-phone"></i><span>Contáctanos</span>
-            </a>
-          </div>
-          <div class="nav_hamburger" id="hamburgerButton">
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </header>
-  <div class="nav-menu-overlay" id="navMenuOverlay">
-    <div class="nav-menu-content">
-      <ul class="nav-menu-list">
-        <li class="nav-menu-item"><a href="#" class="nav-menu-link">Inicio</a></li>
-        <li class="nav-menu-item"><a href="#" class="nav-menu-link">Nosotros</a></li>
-        <li class="nav-menu-item"><a href="#" class="nav-menu-link">Galería</a></li>
-        <li class="nav-menu-item"><a href="#" class="nav-menu-link">Precios</a></li>
-        <li class="nav-menu-item"><a href="#" class="nav-menu-link">Tienda</a></li>
-        <li class="nav-menu-item"><a href="#" class="nav-menu-link">Blog</a></li>
-        <li class="nav-menu-item"><a href="/contacto.php" class="nav-menu-link">Contacto</a></li>
-      </ul>
-    </div>
-  </div>
+  <?php include 'includes/header.php'; ?>
   <section class="page-header-start container-wide ">
     <img src="assets/images/42c08f60-d5b7-4aec-87cd-632c3a0ed6a6.jpeg" alt="Fondo Contacto">
     <div class="page-header-overlay">
@@ -325,7 +287,7 @@ $logo_actual = $logo->obtenerLogoActivo();
             </div>
           </div>
         </div>
-        <div class="contact-form">
+        <div class="contact-form fade-up-animation">
           <h2 class="animated-text">
             <span class="word">Envíanos</span>
             <span class="word lora-italic">un</span>
