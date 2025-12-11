@@ -23,19 +23,19 @@ class Producto {
 
     public function leerTodos($filtro_tipo = null) {
         $query = "SELECT * FROM " . $this->table_name . " WHERE activo = 1";
-        
+
         if ($filtro_tipo) {
             $query .= " AND tipo = :tipo";
         }
-        
+
         $query .= " ORDER BY fecha_creacion DESC";
-        
+
         $stmt = $this->conn->prepare($query);
-        
+
         if ($filtro_tipo) {
             $stmt->bindParam(":tipo", $filtro_tipo);
         }
-        
+
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -45,14 +45,14 @@ class Producto {
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":id", $id);
         $stmt->execute();
-        
+
         $producto = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if ($producto) {
             // Obtener galería asociada
             $producto['galeria'] = $this->obtenerGaleria($id);
         }
-        
+
         return $producto;
     }
 
@@ -64,12 +64,31 @@ class Producto {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // --- NUEVO MÉTODO PARA PRODUCTOS RELACIONADOS ---
+    public function leerRelacionados($tipo, $exclude_id, $limit = 4) {
+        // Selecciona productos del mismo tipo, excluyendo el actual, activos y ordena aleatoriamente
+        $query = "SELECT * FROM " . $this->table_name . " 
+                  WHERE tipo = :tipo 
+                  AND id != :exclude_id 
+                  AND activo = 1 
+                  ORDER BY RAND() 
+                  LIMIT :limit";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":tipo", $tipo);
+        $stmt->bindParam(":exclude_id", $exclude_id);
+        $stmt->bindParam(":limit", $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function crear() {
         $query = "INSERT INTO " . $this->table_name . " 
                   (tipo, nombre, descripcion, precio, portada, stock, anillo, edad, proposito, estado_venta) 
                   VALUES 
                   (:tipo, :nombre, :descripcion, :precio, :portada, :stock, :anillo, :edad, :proposito, :estado_venta)";
-        
+
         $stmt = $this->conn->prepare($query);
 
         // Lógica de Stock para Aves
@@ -99,13 +118,13 @@ class Producto {
         $query = "UPDATE " . $this->table_name . " 
                   SET nombre=:nombre, descripcion=:descripcion, precio=:precio, 
                       stock=:stock, anillo=:anillo, edad=:edad, proposito=:proposito, estado_venta=:estado_venta";
-        
+
         if (!empty($this->portada)) {
             $query .= ", portada=:portada";
         }
-        
+
         $query .= " WHERE id=:id";
-        
+
         $stmt = $this->conn->prepare($query);
 
         // Lógica de Stock para Aves en actualización
@@ -122,7 +141,7 @@ class Producto {
         $stmt->bindParam(":proposito", $this->proposito);
         $stmt->bindParam(":estado_venta", $this->estado_venta);
         $stmt->bindParam(":id", $this->id);
-        
+
         if (!empty($this->portada)) {
             $stmt->bindParam(":portada", $this->portada);
         }
@@ -153,15 +172,15 @@ class Producto {
                     'tmp_name' => $tmp_name,
                     'error' => 0
                 ];
-                
+
                 $ruta = $this->procesarSubida($file_array, 'tienda/galeria');
-                
+
                 if ($ruta) {
                     $query = "INSERT INTO " . $this->table_gallery . " (producto_id, ruta_archivo) VALUES (:pid, :ruta)";
                     $stmt = $this->conn->prepare($query);
                     $stmt->bindParam(":pid", $producto_id);
                     $stmt->bindParam(":ruta", $ruta);
-                    if($stmt->execute()) $uploaded++;
+                    if ($stmt->execute()) $uploaded++;
                 }
             }
         }
@@ -172,10 +191,10 @@ class Producto {
         $extension = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
         $uuid = uniqid();
         $nuevo_nombre = $uuid . '.' . $extension;
-        
+
         $ruta_db = "assets/uploads/" . $subcarpeta . "/" . $nuevo_nombre;
         $ruta_fisica = "../" . $ruta_db;
-        
+
         $directorio = dirname($ruta_fisica);
         if (!is_dir($directorio)) {
             mkdir($directorio, 0755, true);
