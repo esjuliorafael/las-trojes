@@ -4,7 +4,6 @@
     }
 
     .accordion-item {
-        border: 1px solid var(--divider);
         border-radius: 8px;
         margin-bottom: 10px;
         overflow: hidden;

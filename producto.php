@@ -19,6 +19,9 @@ if (!$producto || !$producto['activo']) {
     exit;
 }
 
+// Obtener productos relacionados
+$relacionados = $productoModel->leerRelacionados($producto['tipo'], $producto['id']);
+
 $galeria = isset($producto['galeria']) ? $producto['galeria'] : [];
 
 // Preparar array de imágenes para JS (Portada + Galería)
@@ -29,6 +32,13 @@ if (!empty($producto['portada'])) {
 foreach ($galeria as $img) {
     $imagenes_js[] = $img['ruta_archivo'];
 }
+
+// Datos para JS en el botón de compra
+$js_id = $producto['id'];
+$js_tipo = $producto['tipo'];
+$js_nombre = htmlspecialchars($producto['nombre']);
+$js_precio = $producto['precio'];
+$js_stock = $producto['stock'];
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -36,33 +46,37 @@ foreach ($galeria as $img) {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><?php echo htmlspecialchars($producto['nombre']); ?> - Rancho Las Trojes</title>
-    
+
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Lora:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link rel="stylesheet" href="assets/css/styles.css">
     <link id="darkModeStylesheet" rel="stylesheet" href="assets/css/dark-mode.css" disabled>
-    
+
     <style>
-        /* --- Estilos Generales Producto --- */
+        /* --- ESTILOS GENERALES PRODUCTO --- */
         .product-detail-section {
-            background: var(--white);
-            padding: 3rem 0;
+            background-color: var(--white);
+            border-radius: 1.25rem;
+            padding: 3rem;
             margin-top: 2rem;
         }
 
+        /* Layout Grid Principal (Galería vs Info) */
         .product-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 3rem;
+            margin-bottom: 4rem;
         }
 
         @media (max-width: 900px) {
             .product-container {
                 grid-template-columns: 1fr;
+                gap: 2rem;
             }
         }
 
-        /* --- Galería --- */
+        /* --- GALERÍA DE IMÁGENES --- */
         .product-gallery {
             display: flex;
             flex-direction: column;
@@ -74,6 +88,7 @@ foreach ($galeria as $img) {
             height: 400px;
             border-radius: 1rem;
             overflow: hidden;
+            border: 1px solid var(--divider);
             cursor: pointer;
             position: relative;
         }
@@ -129,12 +144,12 @@ foreach ($galeria as $img) {
             object-fit: cover;
         }
 
-        /* --- Info --- */
-        .product-info h2 {
-            font-size: 2.5em;
-            font-weight: 600;
-            margin-bottom: 1rem;
+        /* --- INFORMACIÓN PRINCIPAL --- */
+        .product-info h1 {
+            font-family: 'Lora', serif;
+            font-size: 2.5rem;
             color: var(--black-blue);
+            margin-bottom: 0.5rem;
         }
 
         .product-price {
@@ -144,49 +159,78 @@ foreach ($galeria as $img) {
             margin-bottom: 1.5rem;
         }
 
-        .product-meta {
-            background: var(--off-white-light);
-            padding: 1.5rem;
-            border-radius: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .meta-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid var(--divider);
-        }
-
-        .meta-item:last-child {
-            border-bottom: none;
-        }
-
-        .meta-label {
-            font-weight: 600;
-            color: var(--text-color);
-        }
-
-        .meta-value {
-            font-weight: 500;
-            color: var(--black-blue);
-        }
-
         .product-description {
             margin-bottom: 2rem;
             line-height: 1.8;
             color: var(--text-color);
         }
 
-        /* --- Botones de Acción --- */
+        /* --- SELECTOR DE CANTIDAD --- */
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+            gap: 1rem;
+        }
+
+        .qty-label {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .qty-wrapper {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--divider);
+            border-radius: 0.75rem;
+            overflow: hidden;
+            height: 45px;
+        }
+
+        .qty-btn {
+            background: var(--off-white-light);
+            border: none;
+            width: 40px;
+            height: 100%;
+            cursor: pointer;
+            transition: 0.2s;
+            color: var(--black-blue);
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qty-btn:hover {
+            background: #e2e8f0;
+            color: var(--brown);
+        }
+
+        .qty-input {
+            width: 50px;
+            text-align: center;
+            border: none;
+            font-weight: 600;
+            color: var(--black-blue);
+            font-size: 1rem;
+            -moz-appearance: textfield;
+            outline: none;
+            background: transparent;
+        }
+
+        .qty-input::-webkit-outer-spin-button,
+        .qty-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* --- BOTONES DE ACCIÓN --- */
         .action-buttons {
             display: flex;
             gap: 1rem;
             flex-wrap: wrap;
-            margin-top: 1rem;
         }
 
-        /* Botón Añadir al Carrito */
         .btn-cart {
             flex: 1;
             background: var(--black-blue);
@@ -209,7 +253,6 @@ foreach ($galeria as $img) {
             transform: translateY(-2px);
         }
 
-        /* Botón Comprar Ahora */
         .btn-buy {
             flex: 1;
             background: var(--brown);
@@ -234,6 +277,7 @@ foreach ($galeria as $img) {
             box-shadow: 0 6px 20px rgba(139, 94, 60, 0.4);
         }
 
+        /* --- ETIQUETAS DE ESTADO (BADGES) --- */
         .status-badge {
             display: inline-block;
             padding: 0.25rem 0.75rem;
@@ -247,7 +291,138 @@ foreach ($galeria as $img) {
         .status-reservado { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
         .status-vendido { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
 
-        /* --- ESTILOS DEL MODAL --- */
+        /* --- SECCIÓN MEDIA (Detalles + FAQ) --- */
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 4rem;
+            padding-top: 3rem;
+            border-top: 1px solid var(--divider);
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            .details-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+        }
+
+        /* Metadatos (Caja Gris) */
+        .product-meta {
+            background: var(--off-white-light);
+            padding: 2rem;
+            border-radius: 1rem;
+            height: fit-content;
+        }
+
+        .meta-title {
+            font-family: 'Lora', serif;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--black-blue);
+        }
+
+        .meta-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--divider);
+        }
+
+        .meta-item:last-child {
+            border-bottom: none;
+        }
+
+        .meta-label {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .meta-value {
+            font-weight: 500;
+            color: var(--black-blue);
+        }
+
+        /* Preguntas Frecuentes */
+        .faq-container {
+            padding: 0.5rem 0;
+        }
+
+        .faq-title {
+            font-family: 'Lora', serif;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--black-blue);
+        }
+
+        /* --- PRODUCTOS RELACIONADOS --- */
+        .related-products-section {
+            padding-top: 2rem;
+            border-top: 1px solid var(--divider);
+        }
+
+        .related-title {
+            font-family: 'Lora', serif;
+            font-size: 2rem;
+            color: var(--black-blue);
+            margin-bottom: 2rem;
+        }
+
+        .related-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .related-card {
+            display: block;
+            text-decoration: none;
+            background: var(--white);
+            border-radius: 1rem;
+            overflow: hidden;
+            border: 1px solid var(--divider);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .related-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .related-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #f0f0f0;
+        }
+
+        .related-info {
+            padding: 1rem;
+        }
+
+        .related-name {
+            font-weight: 600;
+            color: var(--black-blue);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .related-price {
+            color: var(--brown);
+            font-weight: 700;
+        }
+
+        .related-badge {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+
+        /* --- MODAL (Fullscreen) --- */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -336,8 +511,13 @@ foreach ($galeria as $img) {
             opacity: 1;
         }
 
-        .modal-nav.prev { left: 2rem; }
-        .modal-nav.next { right: 2rem; }
+        .modal-nav.prev {
+            left: 2rem;
+        }
+
+        .modal-nav.next {
+            right: 2rem;
+        }
 
         .modal-image-container {
             padding: 1rem;
@@ -371,17 +551,16 @@ foreach ($galeria as $img) {
     <section class="page-header-start container-wide">
         <img src="assets/images/42c08f60-d5b7-4aec-87cd-632c3a0ed6a6.jpeg" alt="Fondo Tienda">
         <div class="page-header-overlay">
-            <h1 class="page-header-title animated-text">
-                <span class="word">Tienda</span>
-            </h1>
-            <p class="page-header-subtitle fade-up-animation">Inicio / Tienda / <?php echo htmlspecialchars($producto['nombre']); ?></p>
+            <h1 class="page-header-title">Tienda</h1>
+            <p class="page-header-subtitle">Inicio / Tienda / <?php echo htmlspecialchars($producto['nombre']); ?></p>
         </div>
     </section>
 
-    <section class="product-detail-section container-wide">
-        <div class="container">
-            <div class="product-container">
+    <section class="container-wide">
+        <div class="container product-detail-section">
 
+            <div class="product-container">
+                
                 <div class="product-gallery">
                     <div class="main-image-container" onclick="openModalIndex(currentIndex)">
                         <img id="mainImg"
@@ -402,82 +581,118 @@ foreach ($galeria as $img) {
 
                 <div class="product-info">
                     <?php if ($producto['tipo'] === 'ave'): ?>
-                        <span class="status-badge status-<?php echo $producto['estado_venta']; ?> fade-up-animation">
+                        <span class="status-badge status-<?php echo $producto['estado_venta']; ?>">
                             <?php echo ucfirst($producto['estado_venta']); ?>
                         </span>
                     <?php endif; ?>
 
-                    <h2 class="animated-text">
-                        <span class="word"><?php echo htmlspecialchars($producto['nombre']); ?></<span>
-                    </h2>
-                    <div class="product-price fade-up-animation">$<?php echo number_format($producto['precio'], 2); ?> MXN</div>
+                    <h1><?php echo htmlspecialchars($producto['nombre']); ?></h1>
+                    <div class="product-price">$<?php echo number_format($producto['precio'], 2); ?> MXN</div>
 
-                    <div class="product-description fade-up-animation">
+                    <div class="product-description">
                         <?php echo nl2br(htmlspecialchars($producto['descripcion'])); ?>
                     </div>
 
-                    <div class="product-meta fade-up-animation">
-                        <div class="meta-item">
-                            <span class="meta-label">Categoría:</span>
-                            <span class="meta-value"><?php echo ucfirst($producto['tipo']); ?></span>
-                        </div>
+                    <?php
+                    $puede_comprar = ($producto['tipo'] === 'ave')
+                        ? ($producto['estado_venta'] === 'disponible')
+                        : ($producto['stock'] > 0);
+                    ?>
 
-                        <?php if ($producto['tipo'] === 'ave'): ?>
-                            <div class="meta-item">
-                                <span class="meta-label">Anillo:</span>
-                                <span class="meta-value"><?php echo $producto['anillo'] ?: 'N/A'; ?></span>
-                            </div>
-                            <div class="meta-item">
-                                <span class="meta-label">Edad / Etapa:</span>
-                                <span class="meta-value"><?php echo $producto['edad'] ?: 'N/A'; ?></span>
-                            </div>
-                            <div class="meta-item">
-                                <span class="meta-label">Propósito:</span>
-                                <span class="meta-value"><?php echo $producto['proposito'] ?: 'N/A'; ?></span>
-                            </div>
-                        <?php else: ?>
-                            <div class="meta-item">
-                                <span class="meta-label">Stock Disponible:</span>
-                                <span class="meta-value"><?php echo $producto['stock']; ?> unidades</span>
+                    <?php if ($puede_comprar): ?>
+                        
+                        <?php if ($producto['tipo'] === 'articulo'): ?>
+                            <div class="quantity-control">
+                                <span class="qty-label">Cantidad:</span>
+                                <div class="qty-wrapper">
+                                    <button type="button" class="qty-btn" onclick="updateQty(-1)"><i class="fas fa-minus"></i></button>
+                                    <input type="number" id="qtyInput" class="qty-input" value="1" min="1" max="<?php echo $producto['stock']; ?>" readonly>
+                                    <button type="button" class="qty-btn" onclick="updateQty(1)"><i class="fas fa-plus"></i></button>
+                                </div>
                             </div>
                         <?php endif; ?>
-                    </div>
 
-                    <div class="action-buttons">
-                        <?php
-                        $puede_comprar = ($producto['tipo'] === 'ave')
-                            ? ($producto['estado_venta'] === 'disponible')
-                            : ($producto['stock'] > 0);
-
-                        // Datos para JS
-                        $js_id = $producto['id'];
-                        $js_tipo = $producto['tipo'];
-                        $js_nombre = htmlspecialchars($producto['nombre']);
-                        $js_precio = $producto['precio'];
-                        ?>
-
-                        <?php if ($puede_comprar): ?>
-                            <button class="btn-cart fade-up-animation" onclick="addToCart(
-                                <?php echo $js_id; ?>, '<?php echo $js_tipo; ?>', '<?php echo $js_nombre; ?>', <?php echo $js_precio; ?>
-                            )">
+                        <div class="action-buttons">
+                            <button class="btn-cart" onclick="addCurrentProductToCart()">
                                 <i class="fas fa-cart-plus"></i> Añadir al Carrito
                             </button>
-
-                            <button class="btn-buy fade-up-animation" onclick="buyNow(
-                                <?php echo $js_id; ?>, '<?php echo $js_tipo; ?>', '<?php echo $js_nombre; ?>', <?php echo $js_precio; ?>
-                            )">
+                            <button class="btn-buy" onclick="buyCurrentProductNow()">
                                 <i class="fas fa-bolt"></i> Comprar Ahora
                             </button>
-                        <?php else: ?>
-                            <button class="btn-cart fade-up-animation" style="background: var(--text-color); cursor: not-allowed; width:100%;" disabled>
-                                No Disponible
-                            </button>
-                        <?php endif; ?>
+                        </div>
+
+                    <?php else: ?>
+                        <button class="btn-cart" style="background: var(--text-color); cursor: not-allowed; width:100%;" disabled>
+                            No Disponible
+                        </button>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <div class="details-grid">
+                
+                <div class="product-meta">
+                    <h3 class="meta-title">Detalles</h3>
+                    <div class="meta-item">
+                        <span class="meta-label">Categoría:</span>
+                        <span class="meta-value"><?php echo ucfirst($producto['tipo']); ?></span>
                     </div>
 
+                    <?php if ($producto['tipo'] === 'ave'): ?>
+                        <div class="meta-item">
+                            <span class="meta-label">Anillo:</span>
+                            <span class="meta-value"><?php echo $producto['anillo'] ?: 'N/A'; ?></span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Edad / Etapa:</span>
+                            <span class="meta-value"><?php echo $producto['edad'] ?: 'N/A'; ?></span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Propósito:</span>
+                            <span class="meta-value"><?php echo $producto['proposito'] ?: 'N/A'; ?></span>
+                        </div>
+                    <?php else: ?>
+                        <div class="meta-item">
+                            <span class="meta-label">Stock Disponible:</span>
+                            <span class="meta-value"><?php echo $producto['stock']; ?> unidades</span>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <div class="faq-container">
+                    <h3 class="faq-title">Preguntas Frecuentes</h3>
                     <?php include 'includes/faq.php'; ?>
                 </div>
             </div>
+
+            <?php if (!empty($relacionados)): ?>
+                <div class="related-products-section">
+                    <h3 class="related-title">
+                        <?php echo ($producto['tipo'] === 'ave') ? 'Otras Aves Disponibles' : 'Artículos Relacionados'; ?>
+                    </h3>
+                    <div class="related-grid">
+                        <?php foreach ($relacionados as $rel): ?>
+                            <a href="producto.php?id=<?php echo $rel['id']; ?>" class="related-card">
+                                <img src="<?php echo !empty($rel['portada']) ? $rel['portada'] : 'assets/images/placeholder.jpg'; ?>"
+                                     alt="<?php echo htmlspecialchars($rel['nombre']); ?>"
+                                     class="related-img">
+                                <div class="related-info">
+                                    <div class="related-name">
+                                        <?php echo htmlspecialchars($rel['nombre']); ?>
+                                        <?php if ($rel['tipo'] == 'ave' && $rel['estado_venta'] != 'disponible'): ?>
+                                            <span class="related-badge status-<?php echo $rel['estado_venta']; ?>">
+                                                <?php echo ucfirst($rel['estado_venta']); ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="related-price">$<?php echo number_format($rel['precio'], 2); ?></div>
+                                </div>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
         </div>
     </section>
 
@@ -497,7 +712,7 @@ foreach ($galeria as $img) {
     <?php include 'includes/footer.php'; ?>
 
     <script>
-        // --- LÓGICA DE GALERÍA Y MODAL DEL PRODUCTO ---
+        // --- 1. LÓGICA DE GALERÍA Y MODAL ---
         const productImages = <?php echo json_encode($imagenes_js); ?>;
         let currentIndex = 0;
 
@@ -539,6 +754,81 @@ foreach ($galeria as $img) {
             if (e.key === 'ArrowLeft') navigateModal(-1);
             if (e.key === 'ArrowRight') navigateModal(1);
         });
+
+        // --- 2. LÓGICA DE CANTIDAD Y CARRITO ---
+        const maxStock = <?php echo $js_stock; ?>;
+        const isAve = '<?php echo $js_tipo; ?>' === 'ave';
+
+        function updateQty(change) {
+            if (isAve) return; // Las aves siempre son 1
+
+            const input = document.getElementById('qtyInput');
+            let newVal = parseInt(input.value) + change;
+
+            if (newVal < 1) newVal = 1;
+            if (newVal > maxStock) {
+                newVal = maxStock;
+                alert("Máximo stock disponible alcanzado");
+            }
+            input.value = newVal;
+        }
+
+        // Funciones "Wrapper" para manejar la cantidad antes de llamar a las funciones globales
+        function addCurrentProductToCart() {
+            const qty = isAve ? 1 : parseInt(document.getElementById('qtyInput').value);
+
+            if (typeof cart !== 'undefined') {
+                const existingIndex = cart.findIndex(i => i.id === <?php echo $js_id; ?>);
+
+                if (existingIndex > -1) {
+                    if (isAve) {
+                        alert("Esta ave ya está en tu carrito (Stock único).");
+                        return;
+                    } else {
+                        cart[existingIndex].cantidad += qty;
+                        alert("Cantidad actualizada (+" + qty + ").");
+                    }
+                } else {
+                    cart.push({
+                        id: <?php echo $js_id; ?>,
+                        tipo: '<?php echo $js_tipo; ?>',
+                        nombre: '<?php echo $js_nombre; ?>',
+                        precio: <?php echo $js_precio; ?>,
+                        cantidad: qty
+                    });
+                    alert("Agregado al carrito.");
+                }
+                saveCart(); // Función global de main.js
+                updateCartUI(); // Función global de main.js
+            } else {
+                console.error("Error: main.js no cargado");
+            }
+        }
+
+        function buyCurrentProductNow() {
+            const qty = isAve ? 1 : parseInt(document.getElementById('qtyInput').value);
+
+            if (typeof cart !== 'undefined') {
+                const existingIndex = cart.findIndex(i => i.id === <?php echo $js_id; ?>);
+
+                if (existingIndex > -1) {
+                    if (!isAve) {
+                        cart[existingIndex].cantidad += qty;
+                    }
+                } else {
+                    cart.push({
+                        id: <?php echo $js_id; ?>,
+                        tipo: '<?php echo $js_tipo; ?>',
+                        nombre: '<?php echo $js_nombre; ?>',
+                        precio: <?php echo $js_precio; ?>,
+                        cantidad: qty
+                    });
+                }
+                saveCart();
+                updateCartUI();
+                window.location.href = 'checkout.php';
+            }
+        }
     </script>
 </body>
 </html>
