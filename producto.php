@@ -515,7 +515,7 @@ $js_stock = $producto['stock'];
         }
 
         /* --- RESPONSIVE --- */
-        @media (max-width: 900px) {
+        @media (max-width: 1024px) {
             .product-container { grid-template-columns: 1fr; gap: 2rem; }
             .action-buttons { flex-direction: column; }
             .details-grid { grid-template-columns: 1fr; gap: 2rem; }
@@ -527,6 +527,12 @@ $js_stock = $producto['stock'];
             .modal-nav { width: 45px; height: 45px; font-size: 1.2rem; }
             .modal-nav.prev { left: 1rem; }
             .modal-nav.next { right: 1rem; }
+        }
+
+        @media (max-width: 512px) {
+            .product-info h1 { font-size: 2em }
+            .product-price { font-size: 1.5em; }
+            .faq-title, .related-title { font-size: 1.75em; }
         }
     </style>
 </head>
