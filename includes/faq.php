@@ -11,7 +11,7 @@
 
     .accordion-header {
         background: var(--off-white-light);
-        padding: 15px;
+        padding: 1rem;
         cursor: pointer;
         font-weight: 600;
         display: flex;
@@ -21,7 +21,7 @@
 
     .accordion-content {
         display: none;
-        padding: 15px;
+        padding: 1rem;
         background: var(--white);
         color: var(--text-color);
         line-height: 1.6;
