@@ -53,11 +53,10 @@ $js_stock = $producto['stock'];
     <link id="darkModeStylesheet" rel="stylesheet" href="assets/css/dark-mode.css" disabled>
 
     <style>
-        /* --- ESTILOS GENERALES PRODUCTO --- */
+        /* --- ESTILOS GENERALES DEL PRODUCTO --- */
         .product-detail-section {
             background-color: var(--white);
-            border-radius: 1.25rem;
-            padding: 3rem;
+            padding: 3rem 0;
             margin-top: 2rem;
         }
 
@@ -69,14 +68,7 @@ $js_stock = $producto['stock'];
             margin-bottom: 4rem;
         }
 
-        @media (max-width: 900px) {
-            .product-container {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-            }
-        }
-
-        /* --- GALERÍA DE IMÁGENES --- */
+        /* --- GALERÍA --- */
         .product-gallery {
             display: flex;
             flex-direction: column;
@@ -85,10 +77,9 @@ $js_stock = $producto['stock'];
 
         .main-image-container {
             width: 100%;
-            height: 400px;
+            height: 512px;
             border-radius: 1rem;
             overflow: hidden;
-            border: 1px solid var(--divider);
             cursor: pointer;
             position: relative;
         }
@@ -144,18 +135,18 @@ $js_stock = $producto['stock'];
             object-fit: cover;
         }
 
-        /* --- INFORMACIÓN PRINCIPAL --- */
+        /* --- INFO PRINCIPAL --- */
         .product-info h1 {
             font-family: 'Lora', serif;
-            font-size: 2.5rem;
+            font-size: 3rem;
             color: var(--black-blue);
             margin-bottom: 0.5rem;
         }
 
         .product-price {
-            font-size: 1.5rem;
-            color: var(--brown);
+            font-size: 2rem;
             font-weight: 700;
+            color: var(--brown);
             margin-bottom: 1.5rem;
         }
 
@@ -277,7 +268,7 @@ $js_stock = $producto['stock'];
             box-shadow: 0 6px 20px rgba(139, 94, 60, 0.4);
         }
 
-        /* --- ETIQUETAS DE ESTADO (BADGES) --- */
+        /* --- BADGES (Etiquetas de estado) --- */
         .status-badge {
             display: inline-block;
             padding: 0.25rem 0.75rem;
@@ -302,14 +293,6 @@ $js_stock = $producto['stock'];
             align-items: start;
         }
 
-        @media (max-width: 900px) {
-            .details-grid {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-            }
-        }
-
-        /* Metadatos (Caja Gris) */
         .product-meta {
             background: var(--off-white-light);
             padding: 2rem;
@@ -345,14 +328,13 @@ $js_stock = $producto['stock'];
             color: var(--black-blue);
         }
 
-        /* Preguntas Frecuentes */
         .faq-container {
             padding: 0.5rem 0;
         }
 
         .faq-title {
-            font-family: 'Lora', serif;
-            font-size: 1.5rem;
+            font-size: 2.5em;
+            font-weight: 600;
             margin-bottom: 1rem;
             color: var(--black-blue);
         }
@@ -364,15 +346,15 @@ $js_stock = $producto['stock'];
         }
 
         .related-title {
-            font-family: 'Lora', serif;
-            font-size: 2rem;
+            font-size: 2.5em;
+            font-weight: 600;
+            margin-bottom: 1rem;
             color: var(--black-blue);
-            margin-bottom: 2rem;
         }
 
         .related-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
             gap: 1.5rem;
         }
 
@@ -382,7 +364,6 @@ $js_stock = $producto['stock'];
             background: var(--white);
             border-radius: 1rem;
             overflow: hidden;
-            border: 1px solid var(--divider);
             transition: transform 0.3s, box-shadow 0.3s;
         }
 
@@ -393,25 +374,27 @@ $js_stock = $producto['stock'];
 
         .related-img {
             width: 100%;
-            height: 200px;
+            height: 256px;
             object-fit: cover;
             background: #f0f0f0;
         }
 
         .related-info {
             padding: 1rem;
+            text-align: center;
         }
 
         .related-name {
+            font-size: 1.25em;
             font-weight: 600;
             color: var(--black-blue);
             margin-bottom: 0.5rem;
-            font-size: 1rem;
         }
 
         .related-price {
+            font-size: 1.25em;
+            font-weight: 600;
             color: var(--brown);
-            font-weight: 700;
         }
 
         .related-badge {
@@ -422,7 +405,7 @@ $js_stock = $producto['stock'];
             vertical-align: middle;
         }
 
-        /* --- MODAL (Fullscreen) --- */
+        /* --- MODAL --- */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -511,13 +494,8 @@ $js_stock = $producto['stock'];
             opacity: 1;
         }
 
-        .modal-nav.prev {
-            left: 2rem;
-        }
-
-        .modal-nav.next {
-            right: 2rem;
-        }
+        .modal-nav.prev { left: 2rem; }
+        .modal-nav.next { right: 2rem; }
 
         .modal-image-container {
             padding: 1rem;
@@ -536,6 +514,14 @@ $js_stock = $producto['stock'];
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
         }
 
+        /* --- RESPONSIVE --- */
+        @media (max-width: 900px) {
+            .product-container { grid-template-columns: 1fr; gap: 2rem; }
+            .action-buttons { flex-direction: column; }
+            .details-grid { grid-template-columns: 1fr; gap: 2rem; }
+            .related-grid { grid-template-columns: 1fr; }
+        }
+
         @media (max-width: 768px) {
             .modal-close { top: 1rem; right: 1rem; width: 45px; height: 45px; }
             .modal-nav { width: 45px; height: 45px; font-size: 1.2rem; }
@@ -551,17 +537,18 @@ $js_stock = $producto['stock'];
     <section class="page-header-start container-wide">
         <img src="assets/images/42c08f60-d5b7-4aec-87cd-632c3a0ed6a6.jpeg" alt="Fondo Tienda">
         <div class="page-header-overlay">
-            <h1 class="page-header-title">Tienda</h1>
-            <p class="page-header-subtitle">Inicio / Tienda / <?php echo htmlspecialchars($producto['nombre']); ?></p>
+            <h1 class="page-header-title animated-text">
+                <span class="word">Tienda</span>
+            </h1>
+            <p class="page-header-subtitle fade-up-animation">Inicio / Tienda / <?php echo htmlspecialchars($producto['nombre']); ?></p>
         </div>
     </section>
 
-    <section class="container-wide">
-        <div class="container product-detail-section">
+    <section class="product-detail-section container-wide">
+        <div class="container">
 
             <div class="product-container">
-                
-                <div class="product-gallery">
+                <div class="product-gallery fade-up-animation">
                     <div class="main-image-container" onclick="openModalIndex(currentIndex)">
                         <img id="mainImg"
                              src="<?php echo !empty($producto['portada']) ? $producto['portada'] : 'assets/images/placeholder.jpg'; ?>"
@@ -630,8 +617,7 @@ $js_stock = $producto['stock'];
             </div>
 
             <div class="details-grid">
-                
-                <div class="product-meta">
+                <div class="product-meta fade-up-animation">
                     <h3 class="meta-title">Detalles</h3>
                     <div class="meta-item">
                         <span class="meta-label">Categoría:</span>
@@ -660,19 +646,28 @@ $js_stock = $producto['stock'];
                 </div>
 
                 <div class="faq-container">
-                    <h3 class="faq-title">Preguntas Frecuentes</h3>
+                    <h3 class="faq-title animated-text">
+                        <span class="word">Preguntas</span>
+                        <span class="word lora-italic">Frecuentes</span>
+                    </h3>
                     <?php include 'includes/faq.php'; ?>
                 </div>
             </div>
 
             <?php if (!empty($relacionados)): ?>
                 <div class="related-products-section">
-                    <h3 class="related-title">
-                        <?php echo ($producto['tipo'] === 'ave') ? 'Otras Aves Disponibles' : 'Artículos Relacionados'; ?>
+                    <h3 class="related-title animated-text">
+                        <?php if ($producto['tipo'] === 'ave'): ?>
+                            <span class="word">Otras</span>
+                            <span class="word lora-italic">Aves Disponibles</span>
+                        <?php else: ?>
+                            <span class="word">Artículos</span>
+                            <span class="word lora-italic">Relacionados</span>
+                        <?php endif; ?>
                     </h3>
                     <div class="related-grid">
                         <?php foreach ($relacionados as $rel): ?>
-                            <a href="producto.php?id=<?php echo $rel['id']; ?>" class="related-card">
+                            <a href="producto.php?id=<?php echo $rel['id']; ?>" class="related-card fade-up-animation">
                                 <img src="<?php echo !empty($rel['portada']) ? $rel['portada'] : 'assets/images/placeholder.jpg'; ?>"
                                      alt="<?php echo htmlspecialchars($rel['nombre']); ?>"
                                      class="related-img">
@@ -758,6 +753,7 @@ $js_stock = $producto['stock'];
         // --- 2. LÓGICA DE CANTIDAD Y CARRITO ---
         const maxStock = <?php echo $js_stock; ?>;
         const isAve = '<?php echo $js_tipo; ?>' === 'ave';
+        const currentProductId = <?php echo $js_id; ?>;
 
         function updateQty(change) {
             if (isAve) return; // Las aves siempre son 1
@@ -773,61 +769,100 @@ $js_stock = $producto['stock'];
             input.value = newVal;
         }
 
-        // Funciones "Wrapper" para manejar la cantidad antes de llamar a las funciones globales
+        // --- Funciones Wrapper para el Carrito ---
         function addCurrentProductToCart() {
-            const qty = isAve ? 1 : parseInt(document.getElementById('qtyInput').value);
-
-            if (typeof cart !== 'undefined') {
-                const existingIndex = cart.findIndex(i => i.id === <?php echo $js_id; ?>);
-
-                if (existingIndex > -1) {
-                    if (isAve) {
-                        alert("Esta ave ya está en tu carrito (Stock único).");
-                        return;
-                    } else {
-                        cart[existingIndex].cantidad += qty;
-                        alert("Cantidad actualizada (+" + qty + ").");
-                    }
-                } else {
-                    cart.push({
-                        id: <?php echo $js_id; ?>,
-                        tipo: '<?php echo $js_tipo; ?>',
-                        nombre: '<?php echo $js_nombre; ?>',
-                        precio: <?php echo $js_precio; ?>,
-                        cantidad: qty
-                    });
-                    alert("Agregado al carrito.");
-                }
-                saveCart(); // Función global de main.js
-                updateCartUI(); // Función global de main.js
-            } else {
-                console.error("Error: main.js no cargado");
+            if (typeof cart === 'undefined') {
+                console.error("Error: main.js no cargado o variable 'cart' no accesible");
+                return;
             }
+
+            const qtyToAdd = isAve ? 1 : parseInt(document.getElementById('qtyInput').value);
+            
+            // 1. Buscar si ya existe en el carrito
+            const existingItemIndex = cart.findIndex(i => i.id === currentProductId);
+            let currentInCart = 0;
+            
+            if (existingItemIndex > -1) {
+                currentInCart = cart[existingItemIndex].cantidad;
+            }
+
+            // 2. Validar stock total (Lo que ya tengo + lo que quiero agregar)
+            if (isAve) {
+                if (currentInCart >= 1) {
+                    alert("Esta ave ya está en tu carrito (Stock único).");
+                    return;
+                }
+            } else {
+                if ((currentInCart + qtyToAdd) > maxStock) {
+                    alert(`No puedes agregar esa cantidad. Stock disponible: ${maxStock}. Ya tienes ${currentInCart} en el carrito.`);
+                    return;
+                }
+            }
+
+            // 3. Modificar el carrito
+            if (existingItemIndex > -1) {
+                cart[existingItemIndex].cantidad += qtyToAdd;
+                alert("Cantidad actualizada en el carrito.");
+            } else {
+                cart.push({ 
+                    id: currentProductId, 
+                    tipo: '<?php echo $js_tipo; ?>', 
+                    nombre: '<?php echo $js_nombre; ?>', 
+                    precio: <?php echo $js_precio; ?>, 
+                    cantidad: qtyToAdd 
+                });
+                alert("Agregado al carrito.");
+            }
+            
+            saveCart(); // Función global de main.js
+            updateCartUI(); // Función global de main.js
         }
 
         function buyCurrentProductNow() {
-            const qty = isAve ? 1 : parseInt(document.getElementById('qtyInput').value);
-
-            if (typeof cart !== 'undefined') {
-                const existingIndex = cart.findIndex(i => i.id === <?php echo $js_id; ?>);
-
-                if (existingIndex > -1) {
-                    if (!isAve) {
-                        cart[existingIndex].cantidad += qty;
-                    }
-                } else {
-                    cart.push({
-                        id: <?php echo $js_id; ?>,
-                        tipo: '<?php echo $js_tipo; ?>',
-                        nombre: '<?php echo $js_nombre; ?>',
-                        precio: <?php echo $js_precio; ?>,
-                        cantidad: qty
-                    });
-                }
-                saveCart();
-                updateCartUI();
-                window.location.href = 'checkout.php';
+            if (typeof cart === 'undefined') {
+                console.error("Error: main.js no cargado");
+                return;
             }
+
+            const qtyToAdd = isAve ? 1 : parseInt(document.getElementById('qtyInput').value);
+            
+            // 1. Buscar si ya existe
+            const existingItemIndex = cart.findIndex(i => i.id === currentProductId);
+            let currentInCart = 0;
+
+            if (existingItemIndex > -1) {
+                currentInCart = cart[existingItemIndex].cantidad;
+            }
+
+            // 2. Validar stock
+            if (isAve) {
+                if (currentInCart >= 1) {
+                    window.location.href = 'checkout.php';
+                    return;
+                }
+            } else {
+                if ((currentInCart + qtyToAdd) > maxStock) {
+                    alert(`No puedes comprar esa cantidad. Stock disponible: ${maxStock}. Ya tienes ${currentInCart} en el carrito.`);
+                    return; 
+                }
+            }
+
+            // 3. Proceder
+            if (existingItemIndex > -1) {
+                cart[existingItemIndex].cantidad += qtyToAdd;
+            } else {
+                cart.push({ 
+                    id: currentProductId, 
+                    tipo: '<?php echo $js_tipo; ?>', 
+                    nombre: '<?php echo $js_nombre; ?>', 
+                    precio: <?php echo $js_precio; ?>, 
+                    cantidad: qtyToAdd 
+                });
+            }
+            
+            saveCart();
+            updateCartUI();
+            window.location.href = 'checkout.php';
         }
     </script>
 </body>

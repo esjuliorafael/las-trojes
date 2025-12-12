@@ -8,14 +8,19 @@ class Orden {
         $this->conn = $db;
     }
 
+    /**
+     * Crea una orden verificando disponibilidad en tiempo real (Atomicidad)
+     * Retorna array: ['success' => bool, 'orden_id' => int|null, 'message' => string]
+     */
     public function crear($datos_cliente, $carrito, $costos) {
         try {
             $this->conn->beginTransaction();
 
-            // 1. Insertar Orden
+            // 1. Insertar Encabezado de la Orden
             $query = "INSERT INTO " . $this->table . " 
                       (cliente_nombre, cliente_telefono, direccion_envio, estado_envio, subtotal, costo_envio, total) 
-                      VALUES (:nombre, :tel, :dir, :edo, :sub, :envio, :total)";
+                      VALUES 
+                      (:nombre, :tel, :dir, :edo, :sub, :envio, :total)";
             
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(":nombre", $datos_cliente['nombre']);
@@ -29,12 +34,49 @@ class Orden {
             
             $orden_id = $this->conn->lastInsertId();
 
-            // 2. Procesar Detalles y Stock
+            // 2. Procesar Detalles con VERIFICACIÓN DE STOCK (Atomic Check)
             foreach ($carrito as $item) {
-                // Insertar detalle
+                
+                // A. Intentar reservar/descontar stock PRIMERO
+                if ($item['tipo'] == 'ave') {
+                    // Solo actualiza SI el estado actual es 'disponible'
+                    // Esto previene que dos personas compren la misma ave simultáneamente
+                    $q_upd = "UPDATE productos 
+                              SET estado_venta = 'reservado', stock = 0 
+                              WHERE id = :id AND estado_venta = 'disponible'";
+                    
+                    $stmt_upd = $this->conn->prepare($q_upd);
+                    $stmt_upd->bindParam(":id", $item['id']);
+                    $stmt_upd->execute();
+
+                    // Si rowCount es 0, significa que ya NO estaba disponible (Race Condition perdida)
+                    if ($stmt_upd->rowCount() == 0) {
+                        throw new Exception("El ave '" . $item['nombre'] . "' ya no está disponible. Alguien acaba de comprarla.");
+                    }
+
+                } else {
+                    // Artículos: Solo actualiza SI el stock es suficiente
+                    $q_upd = "UPDATE productos 
+                              SET stock = stock - :cant 
+                              WHERE id = :id AND stock >= :cant";
+                    
+                    $stmt_upd = $this->conn->prepare($q_upd);
+                    $stmt_upd->bindParam(":cant", $item['cantidad']);
+                    $stmt_upd->bindParam(":id", $item['id']);
+                    $stmt_upd->execute();
+
+                    // Si rowCount es 0, no había suficiente stock
+                    if ($stmt_upd->rowCount() == 0) {
+                        throw new Exception("Stock insuficiente para '" . $item['nombre'] . "'.");
+                    }
+                }
+
+                // B. Si pasó la validación de stock, insertamos el detalle
                 $q_det = "INSERT INTO " . $this->table_detalles . " 
                           (orden_id, producto_id, nombre_producto, tipo_producto, cantidad, precio_unitario) 
-                          VALUES (:oid, :pid, :nom, :tipo, :cant, :precio)";
+                          VALUES 
+                          (:oid, :pid, :nom, :tipo, :cant, :precio)";
+                
                 $stmt_det = $this->conn->prepare($q_det);
                 $stmt_det->bindParam(":oid", $orden_id);
                 $stmt_det->bindParam(":pid", $item['id']);
@@ -43,30 +85,15 @@ class Orden {
                 $stmt_det->bindParam(":cant", $item['cantidad']);
                 $stmt_det->bindParam(":precio", $item['precio']);
                 $stmt_det->execute();
-
-                // Actualizar Stock/Estado
-                if ($item['tipo'] == 'ave') {
-                    // Ave se reserva
-                    $q_upd = "UPDATE productos SET estado_venta = 'reservado', stock = 0 WHERE id = :id";
-                    $stmt_upd = $this->conn->prepare($q_upd);
-                    $stmt_upd->bindParam(":id", $item['id']);
-                    $stmt_upd->execute();
-                } else {
-                    // Articulo resta stock
-                    $q_upd = "UPDATE productos SET stock = stock - :cant WHERE id = :id";
-                    $stmt_upd = $this->conn->prepare($q_upd);
-                    $stmt_upd->bindParam(":cant", $item['cantidad']);
-                    $stmt_upd->bindParam(":id", $item['id']);
-                    $stmt_upd->execute();
-                }
             }
 
             $this->conn->commit();
-            return $orden_id;
+            return ['success' => true, 'orden_id' => $orden_id, 'message' => 'Orden creada'];
 
         } catch (Exception $e) {
             $this->conn->rollBack();
-            return false;
+            // Retornamos el error específico (ej. "El ave X ya no está disponible")
+            return ['success' => false, 'orden_id' => null, 'message' => $e->getMessage()];
         }
     }
 
@@ -89,7 +116,6 @@ class Orden {
         try {
             $this->conn->beginTransaction();
 
-            // 1. Obtener detalles para devolver stock
             $detalles = $this->obtenerDetalles($id);
             
             foreach ($detalles as $item) {
@@ -109,7 +135,6 @@ class Orden {
                 }
             }
 
-            // 2. Marcar orden como cancelada
             $query = "UPDATE " . $this->table . " SET estatus = 'cancelado' WHERE id = :id";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(":id", $id);

@@ -344,8 +344,8 @@ $logo_actual = $logo->obtenerLogoActivo();
                         <span class="word lora-italic">un</span>
                         <span class="word lora-italic">mensaje</span>
                     </h2>
-                    <p class="fade-up-animation">Completa el formulario y te responderemos lo antes posible.</p>
-                    <form id="whatsappForm" class="fade-up-animation">
+                    <p>Completa el formulario y te responderemos lo antes posible.</p>
+                    <form id="whatsappForm">
                         <div class="form-row">
                             <div class="form-col">
                                 <div class="form-group">
