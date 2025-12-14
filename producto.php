@@ -302,7 +302,7 @@ $js_stock = $producto['stock'];
 
         .meta-title {
             font-family: 'Lora', serif;
-            font-size: 1.5rem;
+            font-size: 1.5em;
             margin-bottom: 1.5rem;
             color: var(--black-blue);
         }

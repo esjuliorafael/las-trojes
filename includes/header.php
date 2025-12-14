@@ -20,11 +20,35 @@
                         basename($_SERVER['PHP_SELF']) == 'producto.php' || 
                         basename($_SERVER['PHP_SELF']) == 'checkout.php'
                     ): ?>
-                        <a href="checkout.php" class="btn-icon" style="position: relative;">
-                            <i class="fa-solid fa-shopping-cart"></i>
-                            <span id="cart-count" style="position: absolute; top: 0; right: 0; background: var(--brown); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; display: none;">0</span>
-                        </a>
-                    <?php endif; ?>
+                        <div class="cart-dropdown-wrapper" style="position: relative;">
+                            
+                            <a href="javascript:void(0);" id="cartToggleBtn" class="btn-icon" style="position: relative;">
+                                <i class="fa-solid fa-shopping-cart"></i>
+                                <span id="cart-count" style="position: absolute; top: 0; right: 0; background: var(--brown); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; display: none;">0</span>
+                            </a>
+
+                            <div id="miniCartOverlay" class="mini-cart-overlay"></div>
+
+                            <div id="miniCart" class="mini-cart-container">
+                                <div class="mini-cart-header">
+                                    <h3>Tu Carrito</h3>
+                                    <button id="closeMiniCart"><i class="fas fa-times"></i></button>
+                                </div>
+                                
+                                <div id="miniCartItems" class="mini-cart-items">
+                                    <div class="empty-msg">Cargando...</div>
+                                </div>
+
+                                <div class="mini-cart-footer">
+                                    <div class="mini-subtotal">
+                                        <span>Subtotal:</span>
+                                        <strong id="miniCartTotal">$0.00</strong>
+                                    </div>
+                                    <a href="checkout.php" class="btn-checkout-mini">Proceder al Pago</a>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
 
                     <a href="contacto.php" class="btn-text">
                         <i class="fa-solid fa-phone"></i><span>Contáctanos</span>
@@ -50,4 +74,12 @@
             <li class="nav-menu-item"><a href="contacto.php" class="nav-menu-link">Contacto</a></li>
         </ul>
     </div>
+</div>
+
+<div id="mobileFloatingCart" class="mobile-floating-cart">
+    <div class="floating-cart-icon">
+        <i class="fa-solid fa-shopping-cart"></i>
+        <span id="mobile-cart-count">0</span>
+    </div>
+    <span class="floating-text">Ver Carrito</span>
 </div>
