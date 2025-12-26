@@ -1,4 +1,7 @@
 <?php
+/* -------------------------------------------------------------------------- */
+/* CONFIGURACIÓN                               */
+/* -------------------------------------------------------------------------- */
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
@@ -12,24 +15,29 @@ include_once '../models/Medio.php';
 $database = new Database();
 $db = $database->getConnection();
 
+/* -------------------------------------------------------------------------- */
+/* LÓGICA                                    */
+/* -------------------------------------------------------------------------- */
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    // Obtener logo activo
+    
+    // 1. Obtener logo activo
     $logo = new Logo($db);
     $logo_activo = $logo->obtenerLogoActivo();
     
-    // Obtener categorías
+    // 2. Obtener categorías de la galería
     $categoria = new Categoria($db);
     $categorias = $categoria->obtenerTodas();
     
-    // Obtener medios
+    // 3. Obtener medios (fotos/videos)
     $medio = new Medio($db);
     $medios = $medio->obtenerTodos();
     
-    // Preparar respuesta
+    // 4. Preparar respuesta unificada
     $response = array(
-        "logo" => $logo_activo,
+        "logo"       => $logo_activo,
         "categorias" => $categorias,
-        "medios" => $medios
+        "medios"     => $medios
     );
     
     echo json_encode($response);

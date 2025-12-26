@@ -138,14 +138,15 @@ $js_stock = $producto['stock'];
         /* --- INFO PRINCIPAL --- */
         .product-info h1 {
             font-family: 'Lora', serif;
-            font-size: 3rem;
+            font-size: 3em;
+            font-weight: 600;
             color: var(--black-blue);
             margin-bottom: 0.5rem;
         }
 
         .product-price {
-            font-size: 2rem;
-            font-weight: 700;
+            font-size: 2em;
+            font-weight: 600;
             color: var(--brown);
             margin-bottom: 1.5rem;
         }
@@ -229,7 +230,7 @@ $js_stock = $producto['stock'];
             padding: 1rem 1.5rem;
             border: none;
             border-radius: 0.75rem;
-            font-size: 1rem;
+            font-size: 1em;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;

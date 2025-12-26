@@ -1,4 +1,7 @@
 <?php
+/* -------------------------------------------------------------------------- */
+/* CONFIGURACIÓN                               */
+/* -------------------------------------------------------------------------- */
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST");
@@ -21,7 +24,9 @@ $accion = isset($_GET['accion']) ? $_GET['accion'] : '';
 /* ACCIONES API                                */
 /* -------------------------------------------------------------------------- */
 
+// --- CASO 1: CALCULAR COSTO DE ENVÍO ---
 if ($accion == 'calcular_envio') {
+    
     // Input esperado: { estado: "Jalisco", tiene_articulos: true, tiene_aves: false }
     $estado  = $data['estado'] ?? '';
     $has_art = $data['tiene_articulos'] ?? false;
@@ -31,7 +36,9 @@ if ($accion == 'calcular_envio') {
     
     echo json_encode(['costo_envio' => $costo]);
 
+// --- CASO 2: CREAR ORDEN DE COMPRA ---
 } elseif ($accion == 'crear_orden') {
+    
     // Input esperado: { cliente: {...}, carrito: [...], costos: {...} }
     $cliente = $data['cliente'];
     $carrito = $data['carrito'];
@@ -66,7 +73,7 @@ if ($accion == 'calcular_envio') {
         // ÉXITO: Orden creada y stock descontado
         $orden_id = $resultado['orden_id'];
 
-        // Generar mensaje para WhatsApp
+        // Generar mensaje para WhatsApp con formato limpio
         $msg  = "Hola, he realizado el pedido #$orden_id en Rancho Las Trojes.%0A";
         $msg .= "Total a pagar: $" . number_format($total, 2) . "%0A";
         $msg .= "Detalles:%0A";
