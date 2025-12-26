@@ -4,11 +4,8 @@
         <div class="footer-menu-wrapper">
             <nav class="footer-menu">
                 <a href="#">Inicio</a>
-                <a href="#">Nosotros</a>
                 <a href="/galeria.php">Galería</a>
-                <a href="#">Precios</a>
                 <a href="#">Tienda</a>
-                <a href="#">Blog</a>
                 <a href="/contacto.php">Contacto</a>
             </nav>
         </div>

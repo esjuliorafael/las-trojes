@@ -5,6 +5,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: inherit;
 }
 ::selection {
   background-color: var(--brown);
@@ -524,13 +525,24 @@ header {
   color: var(--white);
   font-size: 1em;
 }
-.footer-bottom div { white-space: nowrap; }
+.footer-bottom div {
+  white-space: nowrap;
+}
+@media (max-width: 768px) {
+  .footer-bottom div {
+    text-align: center;
+    white-space: normal;
+  }
+}
 .footer-bottom a {
   color: var(--brown);
   text-decoration: none;
 }
 @media (max-width: 768px) {
-  .footer-bottom { flex-direction: column; gap: 1rem; }
+  .footer-bottom {
+    flex-direction: column;
+    gap: 1rem;
+  }
 }
 
 /* ANIMACIONES */
