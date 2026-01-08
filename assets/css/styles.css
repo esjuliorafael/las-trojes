@@ -732,7 +732,8 @@ header {
     padding: 0.8rem;
     border-radius: 0.5rem;
     text-decoration: none;
-    font-weight: 600;
+    font-size: 1rem;
+    font-weight: 700;
     transition: background 0.3s;
 }
 
