@@ -187,6 +187,51 @@ $mediosDb = $medio->obtenerTodos();
             color: var(--white);
         }
 
+        /* --- ESTILOS PARA SUBCATEGORÍAS --- */
+        .subcategories-container {
+            display: flex;
+            gap: 0.75rem;
+            overflow-x: auto;
+            padding: 1rem 2rem;
+            background-color: var(--off-white);
+            border-bottom: 1px solid var(--divider);
+            transition: all 0.3s ease;
+        }
+
+        .subcategories-container::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .subcategories-container::-webkit-scrollbar-thumb {
+            background: var(--divider);
+            border-radius: 2px;
+        }
+
+        .subcategory-tab {
+            background: var(--off-white-light);
+            border: 1px solid var(--divider);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: var(--black-blue);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .subcategory-tab:hover {
+            border-color: #c4a47c;
+            color: var(--brown);
+        }
+
+        .subcategory-tab.active {
+            background-color: #c4a47c;
+            border-color: var(--brown);
+            color: var(--white);
+            font-weight: 600;
+        }
+
         .gallery-content {
             padding: 2rem;
             min-height: 400px;
@@ -817,6 +862,8 @@ $mediosDb = $medio->obtenerTodos();
                 </div>
             </div>
         </div>
+
+        <div class="subcategories-container" id="subcategoriesContainer" style="display: none;"></div>
 
         <div class="gallery-content">
             <div class="gallery-grid grid-mode" id="galleryGrid">

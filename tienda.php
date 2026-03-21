@@ -1,11 +1,15 @@
 <?php
 include_once 'config/database.php';
 include_once 'models/Configuracion.php';
+include_once 'models/Producto.php';
 
 $database = new Database();
 $db = $database->getConnection();
 $config = new Configuracion($db);
 $logo_actual = $config->obtenerPorClave('sistema_logo');
+
+$productoModel = new Producto($db);
+$productosDb = $productoModel->leerTodos();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -671,8 +675,10 @@ $logo_actual = $config->obtenerPorClave('sistema_logo');
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // --- DATOS INYECTADOS DESDE PHP ---
+            const allProducts = <?php echo json_encode($productosDb); ?>;
+
             // --- ESTADO DE LA APLICACIÓN ---
-            let allProducts = [];
             let currentType = 'all'; // all, ave, articulo
             let searchText = '';
 
@@ -699,16 +705,7 @@ $logo_actual = $config->obtenerPorClave('sistema_logo');
             const aveFiltersGroup = document.getElementById('aveFiltersGroup');
 
             // --- 1. INICIALIZACIÓN ---
-            fetch('api/tienda.php')
-                .then(res => res.json())
-                .then(data => {
-                    allProducts = data.productos;
-                    renderProducts();
-                })
-                .catch(err => {
-                    console.error(err);
-                    grid.innerHTML = '<div class="empty-results"><p>Error de conexión.</p></div>';
-                });
+            renderProducts();
 
             // --- 2. EVENTOS PRINCIPALES ---
 
@@ -798,19 +795,19 @@ $logo_actual = $config->obtenerPorClave('sistema_logo');
                     if (searchText) {
                         const nombreMatch = p.nombre.toLowerCase().includes(searchText);
                         let anilloMatch = false;
-                        if (p.tipo === 'ave' && p.detalles_ave && p.detalles_ave.anillo) {
-                            anilloMatch = p.detalles_ave.anillo.toLowerCase().includes(searchText);
+                        if (p.tipo === 'ave' && p.anillo) {
+                            anilloMatch = p.anillo.toLowerCase().includes(searchText);
                         }
                         if (!nombreMatch && !anilloMatch) return false;
                     }
 
                     // 3. Filtros Panel (Edad, Propósito, Estado)
                     if (p.tipo === 'ave') {
-                        if (filterEdad && p.detalles_ave.edad !== filterEdad) return false;
-                        if (filterProposito && p.detalles_ave.proposito !== filterProposito) return false;
+                        if (filterEdad && p.edad !== filterEdad) return false;
+                        if (filterProposito && p.proposito !== filterProposito) return false;
                         
                         // Estado: Si el filtro NO es vacío (ver todo), validar
-                        if (filterEstado && p.detalles_ave.estado !== filterEstado) return false;
+                        if (filterEstado && p.estado_venta !== filterEstado) return false;
                     } else {
                         // Filtro Estado para Artículos (stock)
                         if (filterEstado === 'disponible' && p.stock <= 0) return false;
@@ -842,8 +839,8 @@ $logo_actual = $config->obtenerPorClave('sistema_logo');
                 let badges = '';
                 if (isAve) {
                     badges += `<span class="badge badge-ave">Ave</span>`;
-                    if (p.detalles_ave.estado !== 'disponible') {
-                        badges += `<span class="badge badge-status status-${p.detalles_ave.estado}">${p.detalles_ave.estado}</span>`;
+                    if (p.estado_venta !== 'disponible') {
+                        badges += `<span class="badge badge-status status-${p.estado_venta}">${p.estado_venta}</span>`;
                     }
                 } else {
                     badges += `<span class="badge badge-articulo">Artículo</span>`;
@@ -851,7 +848,7 @@ $logo_actual = $config->obtenerPorClave('sistema_logo');
 
                 let meta = '';
                 if (isAve) {
-                    meta = `<span class="meta-tag">${p.detalles_ave.edad} / ${p.detalles_ave.proposito}</span>`;
+                    meta = `<span class="meta-tag">${p.edad} / ${p.proposito}</span>`;
                 } else {
                     meta = `<span class="meta-tag">Stock: ${p.stock}</span>`;
                 }
