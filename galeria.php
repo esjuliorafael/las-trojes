@@ -1,11 +1,19 @@
 <?php
 include_once 'config/database.php';
 include_once 'models/Configuracion.php';
+include_once 'models/Categoria.php';
+include_once 'models/Medio.php';
 
 $database = new Database();
 $db = $database->getConnection();
 $config = new Configuracion($db);
 $logo_actual = $config->obtenerPorClave('sistema_logo');
+
+$categoria = new Categoria($db);
+$categoriasDb = $categoria->leerTodas();
+
+$medio = new Medio($db);
+$mediosDb = $medio->obtenerTodos();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -851,8 +859,8 @@ $logo_actual = $config->obtenerPorClave('sistema_logo');
 
     <script>
         // --- VARIABLES GLOBALES ---
-        let mediaItems = [];
-        let allCategories = [];
+        const mediaItems = <?php echo json_encode($mediosDb); ?>;
+        const allCategories = <?php echo json_encode($categoriasDb); ?>;
         let currentView = 'grid';
         let currentCategory = 'todo';
         let currentSearch = '';
@@ -882,29 +890,12 @@ $logo_actual = $config->obtenerPorClave('sistema_logo');
 
         // --- INICIALIZACIÓN ---
         document.addEventListener('DOMContentLoaded', function() {
-            fetchDataAndRender();
+            renderCategories();
+            renderGallery();
             setupGalleryListeners();
         });
 
         // --- API Y DATOS ---
-        async function fetchDataAndRender() {
-            try {
-                const response = await fetch('api/galeria.php');
-                if (!response.ok) throw new Error('Error HTTP');
-                const data = await response.json();
-
-                mediaItems = data.medios || [];
-                allCategories = data.categorias || [];
-
-                renderCategories();
-                renderGallery();
-
-            } catch (error) {
-                console.error("Error cargando galería:", error);
-                galleryGrid.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>Error al cargar la galería. Intenta recargar.</p></div>`;
-            }
-        }
-
         function renderCategories() {
             let html = `<div class="category-tab active" data-category="todo"><i class="fas fa-th"></i><span>Todo</span><div class="category-badge">${mediaItems.length}</div></div>`;
 
