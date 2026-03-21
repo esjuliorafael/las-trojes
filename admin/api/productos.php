@@ -24,7 +24,7 @@ if ($method === 'POST') {
     // Si viene un ID, es actualización
     $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
     
-    // Asignar valores del POST al modelo
+    // Asignar valores generales del POST al modelo
     $producto->id = $id;
     $producto->tipo = $_POST['tipo'] ?? 'articulo';
     $producto->nombre = $_POST['nombre'] ?? '';
@@ -32,12 +32,14 @@ if ($method === 'POST') {
     $producto->precio = $_POST['precio'] ?? 0;
     $producto->stock = $_POST['stock'] ?? 1;
     
+    // CORRECCIÓN: El estado de venta aplica para aves y artículos
+    $producto->estado_venta = $_POST['estado_venta'] ?? 'disponible';
+    
     // Campos específicos de Ave
     if ($producto->tipo === 'ave') {
         $producto->anillo = $_POST['anillo'] ?? '';
         $producto->edad = $_POST['edad'] ?? '';
         $producto->proposito = $_POST['proposito'] ?? '';
-        $producto->estado_venta = $_POST['estado_venta'] ?? 'disponible';
     }
 
     // Manejo de Portada (Si se subió una nueva)

@@ -612,19 +612,19 @@ $productosDb = $productoModel->leerTodos();
                             <span class="radio-label">Todas</span>
                         </label>
                         <label class="radio-option">
-                            <input type="radio" name="edad" value="Gallo">
+                            <input type="radio" name="edad" value="gallo">
                             <span class="radio-label">Gallo</span>
                         </label>
                         <label class="radio-option">
-                            <input type="radio" name="edad" value="Gallina">
+                            <input type="radio" name="edad" value="gallina">
                             <span class="radio-label">Gallina</span>
                         </label>
                         <label class="radio-option">
-                            <input type="radio" name="edad" value="Pollo">
+                            <input type="radio" name="edad" value="pollo">
                             <span class="radio-label">Pollo</span>
                         </label>
                         <label class="radio-option">
-                            <input type="radio" name="edad" value="Polla">
+                            <input type="radio" name="edad" value="polla">
                             <span class="radio-label">Polla</span>
                         </label>
                     </div>
@@ -638,11 +638,11 @@ $productosDb = $productoModel->leerTodos();
                             <span class="radio-label">Todos</span>
                         </label>
                         <label class="radio-option">
-                            <input type="radio" name="proposito" value="Combate">
+                            <input type="radio" name="proposito" value="combate">
                             <span class="radio-label">Combate</span>
                         </label>
                         <label class="radio-option">
-                            <input type="radio" name="proposito" value="Cría">
+                            <input type="radio" name="proposito" value="cria">
                             <span class="radio-label">Cría</span>
                         </label>
                     </div>
@@ -803,11 +803,12 @@ $productosDb = $productoModel->leerTodos();
 
                     // 3. Filtros Panel (Edad, Propósito, Estado)
                     if (p.tipo === 'ave') {
-                        if (filterEdad && p.edad !== filterEdad) return false;
-                        if (filterProposito && p.proposito !== filterProposito) return false;
+                        if (filterEdad && (!p.edad || p.edad.toLowerCase() !== filterEdad.toLowerCase())) return false;
+                        if (filterProposito && (!p.proposito || p.proposito.toLowerCase() !== filterProposito.toLowerCase())) return false;
                         
-                        // Estado: Si el filtro NO es vacío (ver todo), validar
-                        if (filterEstado && p.estado_venta !== filterEstado) return false;
+                        // Failsafe: Si viene vacío, asumimos disponible
+                        const estadoReal = p.estado_venta || 'disponible';
+                        if (filterEstado && estadoReal.toLowerCase() !== filterEstado.toLowerCase()) return false;
                     } else {
                         // Filtro Estado para Artículos (stock)
                         if (filterEstado === 'disponible' && p.stock <= 0) return false;
@@ -839,7 +840,7 @@ $productosDb = $productoModel->leerTodos();
                 let badges = '';
                 if (isAve) {
                     badges += `<span class="badge badge-ave">Ave</span>`;
-                    if (p.estado_venta !== 'disponible') {
+                    if (p.estado_venta && p.estado_venta !== 'disponible') {
                         badges += `<span class="badge badge-status status-${p.estado_venta}">${p.estado_venta}</span>`;
                     }
                 } else {
@@ -848,7 +849,9 @@ $productosDb = $productoModel->leerTodos();
 
                 let meta = '';
                 if (isAve) {
-                    meta = `<span class="meta-tag">${p.edad} / ${p.proposito}</span>`;
+                    const edadText = p.edad || 'N/A';
+                    const propositoText = p.proposito || 'N/A';
+                    meta = `<span class="meta-tag">${edadText} / ${propositoText}</span>`;
                 } else {
                     meta = `<span class="meta-tag">Stock: ${p.stock}</span>`;
                 }
