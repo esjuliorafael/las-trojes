@@ -4,8 +4,25 @@ include_once 'models/Configuracion.php';
 
 $database = new Database();
 $db = $database->getConnection();
-$config = new Configuracion($db);
-$logo_actual = $config->obtenerPorClave('sistema_logo');
+
+// 1. Traer el logo
+$configObj = new Configuracion($db);
+$logo_actual = $configObj->obtenerPorClave('sistema_logo');
+
+// 2. Traer TODA la configuración como un arreglo clave => valor
+$queryConfig = "SELECT clave, valor FROM configuracion";
+$stmtConfig = $db->prepare($queryConfig);
+$stmtConfig->execute();
+$configuracionDb = [];
+while ($row = $stmtConfig->fetch(PDO::FETCH_ASSOC)) {
+    $configuracionDb[$row['clave']] = $row['valor'];
+}
+
+// 3. Traer las zonas de envío
+$queryZonas = "SELECT id, estado, tipo_zona FROM zonas_envio ORDER BY estado ASC";
+$stmtZonas = $db->prepare($queryZonas);
+$stmtZonas->execute();
+$zonasDb = $stmtZonas->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -258,5 +275,195 @@ $logo_actual = $config->obtenerPorClave('sistema_logo');
 
     <?php include 'includes/footer.php'; ?>
     
+    <script>
+        // --- DATOS INYECTADOS DESDE PHP ---
+        const appConfig = <?php echo json_encode($configuracionDb); ?>;
+        const shippingZones = <?php echo json_encode($zonasDb); ?>;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Llenar selector dinámico de la BD
+            const stateSelect = document.getElementById('estadoSelect');
+            if (stateSelect && shippingZones.length > 0) {
+                shippingZones.forEach(zona => {
+                    const option = document.createElement('option');
+                    option.value = zona.estado;
+                    option.dataset.zoneType = zona.tipo_zona;
+                    option.textContent = zona.estado;
+                    stateSelect.appendChild(option);
+                });
+            }
+            // 2. Pintar carrito
+            renderCheckout();
+        });
+
+        function renderCheckout() {
+            const container = document.getElementById('cartItemsContainer');
+            if (!container) return;
+
+            if (cart.length === 0) {
+                container.innerHTML = '<div class="alert-info">Tu carrito está vacío.</div>';
+                document.getElementById('btnPlaceOrder').disabled = true;
+                document.getElementById('summarySubtotal').textContent = "$0.00";
+                document.getElementById('summaryShipping').textContent = "$0.00";
+                document.getElementById('summaryTotal').textContent = "$0.00";
+                return;
+            }
+
+            container.innerHTML = cart.map((item, index) => `
+                <div class="cart-item">
+                    <div class="item-info">
+                        <h4>${item.nombre}</h4>
+                        <span>${item.tipo === 'ave' ? 'Ave única' : 'Cantidad: ' + item.cantidad}</span>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <div class="item-price">$${formatPrice(item.precio * item.cantidad)}</div>
+                        <button type="button" class="btn-remove" onclick="removeCheckoutItem(${index})" title="Quitar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            calculateShipping();
+        }
+
+        function removeCheckoutItem(index) {
+            cart.splice(index, 1);
+            localStorage.setItem('rlt_cart', JSON.stringify(cart));
+            updateCartUI(); // Función de main.js
+            renderMiniCartContents(); // Función de main.js
+            renderCheckout();
+        }
+
+        function calculateShipping() {
+            let countAves = 0;
+            let hasArticulos = false;
+            let subtotal = 0;
+
+            cart.forEach(item => {
+                subtotal += (item.precio * item.cantidad);
+                if (item.tipo === 'ave') {
+                    countAves += item.cantidad;
+                } else {
+                    hasArticulos = true;
+                }
+            });
+
+            // Actualizar UI
+            const addressSection = document.getElementById('addressSection');
+            const airportSection = document.getElementById('airportSection');
+            const direccionInput = document.getElementById('direccionInput');
+
+            if (hasArticulos) {
+                addressSection.classList.remove('hidden');
+                direccionInput.required = true;
+            } else {
+                addressSection.classList.add('hidden');
+                direccionInput.required = false;
+            }
+
+            if (countAves > 0) {
+                airportSection.classList.remove('hidden');
+            } else {
+                airportSection.classList.add('hidden');
+            }
+
+            // Cálculos matemáticos
+            const stateSelect = document.getElementById('estadoSelect');
+            const selectedOption = stateSelect.options[stateSelect.selectedIndex];
+            const zoneType = selectedOption && selectedOption.value !== "" ? selectedOption.dataset.zoneType : null;
+
+            let shippingAves = 0;
+            let shippingArticulos = 0;
+
+            if (zoneType) {
+                // Regla 1: Cada ave multiplica el costo de su zona
+                if (countAves > 0) {
+                    if (parseInt(appConfig.envio_gratis_aves) === 1) {
+                        shippingAves = 0;
+                    } else {
+                        const costPerAve = zoneType === 'extendida' 
+                            ? parseFloat(appConfig.envio_costo_extendida) 
+                            : parseFloat(appConfig.envio_costo_normal);
+                        shippingAves = costPerAve * countAves; 
+                    }
+                }
+
+                // Regla 2: Los artículos cobran una única tarifa base
+                if (hasArticulos) {
+                    if (parseInt(appConfig.envio_gratis_articulos) === 1) {
+                        shippingArticulos = 0;
+                    } else {
+                        shippingArticulos = parseFloat(appConfig.envio_costo_base_articulos);
+                    }
+                }
+            }
+
+            const totalShipping = zoneType ? (shippingAves + shippingArticulos) : 0;
+            const total = subtotal + totalShipping;
+
+            // Escribir al DOM
+            document.getElementById('summarySubtotal').textContent = '$' + formatPrice(subtotal);
+            
+            if (zoneType) {
+                document.getElementById('summaryShipping').textContent = totalShipping === 0 ? 'Gratis' : '$' + formatPrice(totalShipping);
+            } else {
+                document.getElementById('summaryShipping').textContent = 'Selecciona estado...';
+            }
+            
+            document.getElementById('summaryTotal').textContent = '$' + formatPrice(total);
+            document.getElementById('btnPlaceOrder').disabled = !zoneType;
+        }
+
+        function processOrder() {
+            if (cart.length === 0) return;
+
+            const btn = document.getElementById('btnPlaceOrder');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando orden...';
+
+            const nombre = document.getElementById('nombreCliente').value;
+            const estado = document.getElementById('estadoSelect').value;
+            const totalTexto = document.getElementById('summaryTotal').textContent;
+            
+            let listaProductos = cart.map(item => `- ${item.cantidad}x ${item.nombre}`).join('\n');
+            const idOrden = Math.floor(Date.now() / 1000).toString().slice(-6);
+
+            let plantilla = appConfig.whatsapp_plantilla_default || 'Nuevo pedido de {nombre_cliente}\nTotal: {total}\nItems:\n{lista_productos}';
+            const telefono = appConfig.whatsapp_telefono_default || '';
+
+            let mensaje = plantilla
+                .replace('{id_orden}', idOrden)
+                .replace('{nombre_cliente}', nombre)
+                .replace('{total}', totalTexto)
+                .replace('{lista_productos}', listaProductos);
+
+            const direccionInput = document.getElementById('direccionInput');
+            if (!direccionInput.closest('.hidden')) {
+                mensaje += `\n\nDirección de envío: ${direccionInput.value}, ${estado}`;
+            } else {
+                mensaje += `\n\nEstado destino: ${estado}`;
+            }
+
+            const url = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
+            
+            // Limpiar compra
+            cart = [];
+            localStorage.removeItem('rlt_cart');
+            updateCartUI(); 
+            renderMiniCartContents();
+            
+            // Mandar a WhatsApp
+            window.open(url, '_blank');
+            setTimeout(() => { window.location.href = 'index.php'; }, 1000);
+        }
+
+        function formatPrice(p) {
+            return new Intl.NumberFormat('es-MX', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(p);
+        }
+    </script>
 </body>
 </html>
