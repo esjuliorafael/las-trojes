@@ -3,13 +3,13 @@
 // 1. DEPENDENCIAS Y CONFIGURACIÓN
 // ============================================================================
 include_once 'config/database.php';
-include_once 'models/Logo.php';
+include_once 'models/Configuracion.php';
 
 // --- Conexión Principal (Las Trojes) ---
 $database = new Database();
 $db = $database->getConnection();
-$logo = new Logo($db);
-$logo_actual = $logo->obtenerLogoActivo();
+$config = new Configuracion($db);
+$logo_actual = $config->obtenerPorClave('sistema_logo');
 
 // --- Clase de Conexión Específica (Sistema de Rifas) ---
 class DatabaseRifas

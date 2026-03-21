@@ -1,15 +1,15 @@
 <?php
 include_once 'config/database.php';
 include_once 'models/Producto.php';
-include_once 'models/Logo.php';
+include_once 'models/Configuracion.php';
 
 $database = new Database();
 $db = $database->getConnection();
 
 $productoModel = new Producto($db);
-$logoModel = new Logo($db);
+$config = new Configuracion($db);
 
-$logo_actual = $logoModel->obtenerLogoActivo();
+$logo_actual = $config->obtenerPorClave('sistema_logo');
 
 $id_producto = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $producto = $productoModel->leerUno($id_producto);
