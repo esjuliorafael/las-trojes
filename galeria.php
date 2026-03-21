@@ -858,11 +858,14 @@ $mediosDb = $medio->obtenerTodos();
     <?php include 'includes/footer.php'; ?>
 
     <script>
-        // --- VARIABLES GLOBALES ---
+        // --- DATOS INYECTADOS DESDE PHP ---
         const mediaItems = <?php echo json_encode($mediosDb); ?>;
         const allCategories = <?php echo json_encode($categoriasDb); ?>;
+
+        // --- VARIABLES GLOBALES ---
         let currentView = 'grid';
         let currentCategory = 'todo';
+        let currentSubcategory = 'todo';
         let currentSearch = '';
         let selectedMedia = null;
 
@@ -873,7 +876,7 @@ $mediosDb = $medio->obtenerTodos();
         const gridButton = document.getElementById('gridButton');
         const galleryGrid = document.getElementById('galleryGrid');
         const categoriesContainer = document.getElementById('categoriesContainer');
-
+        const subcategoriesContainer = document.getElementById('subcategoriesContainer');
         const modalOverlay = document.getElementById('modalOverlay');
         const modalClose = document.getElementById('modalClose');
         const modalPrev = document.getElementById('modalPrev');
@@ -895,42 +898,89 @@ $mediosDb = $medio->obtenerTodos();
             setupGalleryListeners();
         });
 
-        // --- API Y DATOS ---
+        // --- RENDERIZADO DE CATEGORÍAS Y SUBCATEGORÍAS ---
         function renderCategories() {
             let html = `<div class="category-tab active" data-category="todo"><i class="fas fa-th"></i><span>Todo</span><div class="category-badge">${mediaItems.length}</div></div>`;
 
             allCategories.forEach(cat => {
-                // USAMOS EL SLUG QUE VIENE DEL BACKEND (Modelo Categoria.php)
-                const key = cat.slug;
+                const key = cat.id; // Usamos ID exacto
                 html += `
                     <div class="category-tab" data-category="${key}">
                         <i class="${cat.icono || 'fas fa-folder'}"></i>
                         <span>${cat.nombre}</span>
-                        <div class="category-badge" id="badge-${key}">0</div>
+                        <div class="category-badge" id="badge-cat-${key}">0</div>
                     </div>
                 `;
             });
             categoriesContainer.innerHTML = html;
-
-            // Calcular contadores
             updateCategoryCounts();
         }
 
         function updateCategoryCounts() {
             allCategories.forEach(cat => {
-                const key = cat.slug;
-                // Comparamos el slug de la categoría con la 'category' del medio (que también es slug desde backend)
-                const count = mediaItems.filter(m => m.category === key).length;
-                const badge = document.getElementById(`badge-${key}`);
+                const key = cat.id;
+                // Filtramos cruzando con categoria_id
+                const count = mediaItems.filter(m => m.categoria_id == key).length;
+                const badge = document.getElementById(`badge-cat-${key}`);
                 if (badge) badge.textContent = count;
             });
+        }
+
+        function renderSubcategories(categoryId) {
+            if (categoryId === 'todo') {
+                subcategoriesContainer.style.display = 'none';
+                return;
+            }
+
+            const cat = allCategories.find(c => c.id == categoryId);
+            
+            // Si la categoría tiene subcategorías, las pintamos
+            if (cat && cat.subcategorias && cat.subcategorias.length > 0) {
+                const countAll = mediaItems.filter(m => m.categoria_id == categoryId).length;
+                let html = `<div class="subcategory-tab active" data-subcategory="todo">Todas (${countAll})</div>`;
+                
+                cat.subcategorias.forEach(sub => {
+                    // Filtramos cruzando con subcategoryId (camelCase desde backend)
+                    const count = mediaItems.filter(m => m.subcategoryId == sub.id).length;
+                    html += `<div class="subcategory-tab" data-subcategory="${sub.id}">${sub.nombre} (${count})</div>`;
+                });
+                
+                subcategoriesContainer.innerHTML = html;
+                subcategoriesContainer.style.display = 'flex';
+            } else {
+                subcategoriesContainer.style.display = 'none';
+            }
+        }
+
+        // --- LÓGICA DE FILTRADO ---
+        function filterMedia() {
+            let list = mediaItems;
+            
+            if (currentCategory !== 'todo') {
+                list = list.filter(m => m.categoria_id == currentCategory);
+            }
+            
+            if (currentSubcategory !== 'todo') {
+                list = list.filter(m => m.subcategoryId == currentSubcategory);
+            }
+            
+            if (currentSearch) {
+                const s = currentSearch.toLowerCase();
+                list = list.filter(m => 
+                    (m.title && m.title.toLowerCase().includes(s)) || 
+                    (m.description && m.description.toLowerCase().includes(s)) ||
+                    (m.subcategory && m.subcategory.toLowerCase().includes(s)) ||
+                    (m.category_name && m.category_name.toLowerCase().includes(s))
+                );
+            }
+            return list;
         }
 
         function renderGallery() {
             const filtered = filterMedia();
 
             if (filtered.length === 0) {
-                galleryGrid.innerHTML = `<div class="empty-state"><i class="fas fa-search"></i><p>No hay resultados.</p></div>`;
+                galleryGrid.innerHTML = `<div class="empty-state"><i class="fas fa-search"></i><p>No hay resultados en esta categoría.</p></div>`;
                 return;
             }
 
@@ -983,16 +1033,6 @@ $mediosDb = $medio->obtenerTodos();
             galleryGrid.innerHTML = html;
         }
 
-        function filterMedia() {
-            // FILTRADO POR SLUG EXACTO
-            let list = currentCategory === 'todo' ? mediaItems : mediaItems.filter(m => m.category === currentCategory);
-            if (currentSearch) {
-                const s = currentSearch.toLowerCase();
-                list = list.filter(m => m.title.toLowerCase().includes(s) || m.description.toLowerCase().includes(s));
-            }
-            return list;
-        }
-
         // --- EVENTOS ---
         function setupGalleryListeners() {
             searchInput.addEventListener('input', (e) => {
@@ -1011,12 +1051,28 @@ $mediosDb = $medio->obtenerTodos();
             masonryButton.addEventListener('click', () => { switchView('masonry'); });
             gridButton.addEventListener('click', () => { switchView('grid'); });
 
+            // Clic en Categoría
             categoriesContainer.addEventListener('click', (e) => {
                 const tab = e.target.closest('.category-tab');
                 if (!tab) return;
                 document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
+                
                 currentCategory = tab.dataset.category;
+                currentSubcategory = 'todo'; // Reseteamos subcategoría al cambiar de padre
+                
+                renderSubcategories(currentCategory);
+                renderGallery();
+            });
+
+            // Clic en Subcategoría
+            subcategoriesContainer.addEventListener('click', (e) => {
+                const tab = e.target.closest('.subcategory-tab');
+                if (!tab) return;
+                document.querySelectorAll('.subcategory-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                currentSubcategory = tab.dataset.subcategory;
                 renderGallery();
             });
 
@@ -1050,7 +1106,7 @@ $mediosDb = $medio->obtenerTodos();
             if (!selectedMedia) return;
 
             modalTitle.textContent = selectedMedia.title;
-            modalDescription.textContent = selectedMedia.description;
+            modalDescription.textContent = selectedMedia.description || '';
             modalLikes.textContent = selectedMedia.likes;
             modalDate.textContent = formatDateToSpanish(selectedMedia.date);
             modalLocation.textContent = selectedMedia.location || '';
@@ -1100,13 +1156,10 @@ $mediosDb = $medio->obtenerTodos();
 
         async function toggleLike() {
             if (!selectedMedia) return;
-
             selectedMedia.isLiked = !selectedMedia.isLiked;
             selectedMedia.likes += selectedMedia.isLiked ? 1 : -1;
-
             modalLikes.textContent = selectedMedia.likes;
             modalLikeButton.querySelector('i').style.color = selectedMedia.isLiked ? '#ff3040' : '#fff';
-
             renderGallery();
 
             try {
