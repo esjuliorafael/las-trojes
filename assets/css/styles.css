@@ -908,3 +908,100 @@ header {
         display: none !important;
     }
 }
+
+/* =========================================
+   ESTADOS POST-CHECKOUT (Feedback Inline)
+   ========================================= */
+
+.checkout-feedback {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: #f8fafc;
+    border-radius: 1.5rem;
+    border: 1px solid #e2e8f0;
+    animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.feedback-success {
+    background: linear-gradient(to bottom, #f0fcf1, #ffffff);
+    border-color: #d0f5d5;
+}
+
+.feedback-icon {
+    font-size: 4.5rem;
+    margin-bottom: 1.5rem;
+    display: inline-block;
+    animation: scaleUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.feedback-success .feedback-icon { color: #1fb255; }
+
+.feedback-title {
+    font-family: 'Lora', serif;
+    font-size: 2.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--black-blue);
+    line-height: 1.6;
+}
+
+.feedback-text {
+    color: var(--text-color);
+    margin-bottom: 2.5rem;
+    font-size: 1em;
+    line-height: 1.6;
+}
+
+.order-ref {
+    display: inline-block;
+    background: #1fb255;
+    color: var(--white);
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    font-family: monospace;
+    font-weight: bold;
+    font-size: 1.25em;
+}
+
+/* Botón WhatsApp Destacado */
+.btn-whatsapp-redirect {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    background: #25d366;
+    color: white;
+    padding: 1rem 2.5rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    font-size: 1.25em;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+}
+
+.btn-whatsapp-redirect:hover {
+    background: #1fb255;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(37, 211, 102, 0.5);
+    color: white;
+}
+
+.redirect-timer {
+    display: block;
+    margin-top: 1.5rem;
+    font-size: 0.75em;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+/* Animaciones */
+@keyframes scaleUp {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}

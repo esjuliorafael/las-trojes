@@ -331,19 +331,40 @@ async function calculateShipping() {
 }
 
 async function processOrder() {
+    // 1. Referencias DOM
     const btn = document.getElementById('btnPlaceOrder');
+    const formContainer = document.querySelector('.checkout-form-col'); 
+    const form = document.getElementById('checkoutForm');
+    
+    // 2. Bloqueo de UI (Evitar doble clic)
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
 
+    // 3. Recolección de Datos
     const nombre = document.getElementById('nombreCliente').value;
     const tel = document.getElementById('telCliente').value;
     const estado = document.getElementById('estadoSelect').value;
     const direccionInput = document.getElementById('direccionInput');
     
+    // Validación básica de HTML5 (si el navegador no lo hizo)
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fab fa-whatsapp"></i> Finalizar Pedido';
+        return;
+    }
+
     let direccionFinal = "";
+    // Asegurarnos de que cart existe y tiene datos
+    if (!cart || cart.length === 0) {
+        alert("Tu carrito está vacío.");
+        window.location.reload();
+        return;
+    }
+
     const hasArt = cart.some(i => i.tipo === 'articulo');
     if (hasArt) {
-        direccionFinal = direccionInput.value;
+        direccionFinal = direccionInput ? direccionInput.value : '';
     } else {
         direccionFinal = "Ocurre / Aeropuerto (Coordinar por Tel)";
     }
@@ -359,6 +380,7 @@ async function processOrder() {
     };
 
     try {
+        // 4. Envío al Backend
         const response = await fetch('api/checkout.php?accion=crear_orden', {
             method: 'POST',
             body: JSON.stringify(orderData)
@@ -366,17 +388,122 @@ async function processOrder() {
         const res = await response.json();
 
         if (res.success) {
+            // ============================================================
+            // CASO ÉXITO: VISTA POST-CHECKOUT
+            // ============================================================
+            
+            // A. Limpieza de datos locales (Crítico para consistencia)
             localStorage.removeItem('rlt_cart');
-            window.location.href = res.whatsapp_link;
+            cart = []; 
+            updateCartUI(); // Resetear badges a 0
+
+            // B. Scroll arriba para que el usuario vea el mensaje
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // C. Inyección de HTML (Reemplazo Inline)
+            formContainer.innerHTML = `
+                <div class="checkout-feedback feedback-success">
+                    <i class="fas fa-check-circle feedback-icon"></i>
+                    <h2 class="feedback-title">¡Gracias, ${nombre.split(' ')[0]}!</h2>
+                    <p class="feedback-text">
+                        Tu orden <span class="order-ref">#${res.orden_id}</span> ha sido registrada correctamente.<br>
+                        Estamos abriendo WhatsApp para confirmar tu pago y envío.
+                    </p>
+                    
+                    <a href="${res.whatsapp_link}" target="_blank" class="btn-whatsapp-redirect">
+                        <i class="fab fa-whatsapp"></i> Enviar Mensaje Ahora
+                    </a>
+                    
+                    <span class="redirect-timer">
+                        <i class="fas fa-circle-notch fa-spin"></i> Redirigiendo en <strong id="countdown">3</strong> segundos...
+                    </span>
+                </div>
+            `;
+
+            // D. Automatización de Redirección
+            let seconds = 3;
+            const countSpan = document.getElementById('countdown');
+            
+            const timer = setInterval(() => {
+                seconds--;
+                if(countSpan) countSpan.textContent = seconds;
+                
+                if (seconds <= 0) {
+                    clearInterval(timer);
+                    // 1. Abrir WhatsApp en nueva pestaña
+                    window.open(res.whatsapp_link, '_blank');
+                    
+                    // 2. Redirigir la pestaña actual al Home tras un breve delay
+                    // Esto limpia el estado visual y evita que el usuario use el botón "Atrás" hacia un checkout roto
+                    setTimeout(() => {
+                        window.location.href = 'index.php'; 
+                    }, 1000);
+                }
+            }, 1000);
+
         } else {
-            alert("Error: " + res.message);
+            // ============================================================
+            // CASO ERROR: FEEDBACK INLINE (No intrusivo)
+            // ============================================================
+            
+            // Buscar si ya existe la caja de error para no duplicarla
+            let errorBox = document.getElementById('checkoutErrorBox');
+            if (!errorBox) {
+                errorBox = document.createElement('div');
+                errorBox.id = 'checkoutErrorBox';
+                errorBox.className = 'alert-info'; 
+                // Estilos inline específicos para error grave
+                errorBox.style.background = '#fee2e2';
+                errorBox.style.color = '#991b1b';
+                errorBox.style.borderLeft = '4px solid #ef4444';
+                errorBox.style.marginTop = '1rem';
+                
+                // Insertar antes del botón de submit
+                form.insertBefore(errorBox, btn);
+            }
+
+            errorBox.innerHTML = `
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <i class="fas fa-exclamation-triangle" style="font-size:1.5rem;"></i>
+                    <div>
+                        <strong>No pudimos procesar tu pedido</strong><br>
+                        ${res.message}
+                    </div>
+                </div>
+            `;
+
+            // Restaurar botón para reintentar
             btn.disabled = false;
-            btn.innerHTML = '<i class="fab fa-whatsapp"></i> Finalizar Pedido';
+            btn.innerHTML = '<i class="fab fa-whatsapp"></i> Intentar Nuevamente';
+            
+            // Scroll hacia el error
+            errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
+
     } catch (e) {
-        alert("Error de conexión");
         console.error(e);
+        alert("Error de conexión. Por favor verifica tu internet.");
         btn.disabled = false;
         btn.innerHTML = '<i class="fab fa-whatsapp"></i> Finalizar Pedido';
     }
+}
+
+/* --- INICIALIZACIÓN AUTOMÁTICA DEL CHECKOUT --- */
+function initCheckoutSystem() {
+    // Verificamos si estamos en la página correcta buscando el contenedor
+    const checkoutContainer = document.getElementById('cartItemsContainer');
+    
+    // Solo ejecutamos si existe el contenedor y la función
+    if (checkoutContainer && typeof renderCheckout === 'function') {
+        renderCheckout();
+    }
+}
+
+// Lógica robusta de carga:
+// Si el documento aún está cargando, esperamos el evento.
+// Si ya cargó (porque el script está al final), ejecutamos directamente.
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCheckoutSystem);
+} else {
+    initCheckoutSystem();
 }

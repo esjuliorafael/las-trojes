@@ -25,7 +25,7 @@ $logo_actual = $logo->obtenerLogoActivo();
         .checkout-section {
             background: var(--white);
             padding: 3rem 0;
-            margin-top: 2rem;
+            margin-top: 10rem;
         }
 
         .checkout-grid {
@@ -258,15 +258,5 @@ $logo_actual = $logo->obtenerLogoActivo();
 
     <?php include 'includes/footer.php'; ?>
     
-    <script>
-        // Inicializar Checkout al cargar la página
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof renderCheckout === 'function') {
-                renderCheckout();
-            } else {
-                console.error("Error: main.js no se cargó correctamente o falta la función renderCheckout.");
-            }
-        });
-    </script>
 </body>
 </html>

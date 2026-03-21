@@ -94,27 +94,30 @@ if (count($raw_oportunidades) > 0) {
 }
 
 // --- D. Consulta Galería Adicional ---
-$queryGaleria = "SELECT ruta_imagen FROM rifas_galeria WHERE rifa_id = :id ORDER BY id ASC";
+$queryGaleria = "SELECT ruta_archivo FROM rifas_galeria WHERE rifa_id = :id ORDER BY id ASC";
 $stmtGal = $dbRifas->prepare($queryGaleria);
 $stmtGal->bindParam(':id', $id_rifa);
 $stmtGal->execute();
 $galeria_db = $stmtGal->fetchAll(PDO::FETCH_ASSOC);
 
 // Construcción de URLs de imágenes
-$base_url_uploads = "https://rifas.rancholastrojes.com.mx/assets/uploads/";
+// CAMBIO: Ahora solo definimos el dominio raíz, porque la BD trae la ruta completa "assets/..."
+$base_domain_rifas = "https://rifas.rancholastrojes.com.mx/";
 $imagenes_rifa = [];
 
 // 1. Imagen de Portada
 if (!empty($rifa_data['imagen'])) {
-    $imagenes_rifa[] = $base_url_uploads . $rifa_data['imagen'];
+    // Concatenamos Dominio + Ruta Completa de BD (assets/uploads/portadas/...)
+    $imagenes_rifa[] = $base_domain_rifas . $rifa_data['imagen'];
 } else {
     $imagenes_rifa[] = "assets/images/placeholder.jpg";
 }
 
 // 2. Imágenes de Galería
 foreach ($galeria_db as $img) {
-    if (!empty($img['ruta_imagen'])) {
-        $imagenes_rifa[] = $base_url_uploads . "galeria/" . $img['ruta_imagen'];
+    if (!empty($img['ruta_archivo'])) {
+        // Concatenamos Dominio + Ruta Completa de BD (assets/uploads/galeria/...)
+        $imagenes_rifa[] = $base_domain_rifas . $img['ruta_archivo'];
     }
 }
 
@@ -249,7 +252,7 @@ $rifa = [
             /* Positioning */
             position: relative;
             /* Box Model */
-            aspect-ratio: 4/3;
+            aspect-ratio: 1/1;
             overflow: hidden;
             border: 1px solid var(--divider);
             border-radius: 1rem;

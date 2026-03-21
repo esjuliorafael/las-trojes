@@ -80,8 +80,8 @@ if ($dbRifas) {
         
         // Validar imagen: Si está vacía, no intentar cargar ruta rota
         $rutaImagen = !empty($r['imagen']) 
-            ? "https://rifas.rancholastrojes.com.mx/assets/uploads/" . $r['imagen']
-            : "assets/images/placeholder.jpg"; // Fallback local
+            ? "https://rifas.rancholastrojes.com.mx/" . $r['imagen']
+            : "assets/images/placeholder.jpg";
 
         $rifasActivas[] = [
             'id' => $r['id'],
@@ -95,6 +95,21 @@ if ($dbRifas) {
         ];
     }
 }
+
+$slides = [
+    [
+        'titulo' => 'Genética de Campeones',
+        'subtitulo' => 'Crianza selectiva con los más altos estándares de sanidad.',
+        'imagen' => 'assets/uploads/sliders/hero_home_1.jpg', 
+        'fallback' => 'https://images.unsplash.com/photo-1548505299-923315a6e29c?q=80&w=2072&auto=format&fit=crop'
+    ],
+    [
+        'titulo' => 'Pasión por la Tradición',
+        'subtitulo' => 'Más de 20 años conservando las mejores líneas de sangre.',
+        'imagen' => 'assets/uploads/sliders/hero_home_2.jpg',
+        'fallback' => 'https://images.unsplash.com/photo-1639749563032-4752b5757753?q=80&w=2070&auto=format&fit=crop'
+    ]
+];
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -276,10 +291,24 @@ if ($dbRifas) {
             color: white;
         }
 
+        @media (max-width: 512px) {
+            .slide-content {
+                bottom: 6rem;
+                left: 1.5rem;
+            }
+        }
+
         .slide-title {
             margin-bottom: 0.5rem;
             font-family: 'Lora', serif;
             font-size: 2.5em;
+            color: var(--white);
+        }
+
+        .slide-text {
+            font-size: 1em;
+            color: var(--white);
+            max-width: 600px;
         }
 
         /* --- Controls --- */
@@ -1010,14 +1039,22 @@ if ($dbRifas) {
                 <div id="hero-slider" class="hero-slider-container">
 
                     <div id="slides-container">
-                        <div class="slide">
-                            <img src="" alt="Slide">
-                            <div class="slide-overlay"></div>
-                            <div class="slide-content">
-                                <h2 class="slide-title"></h2>
-                                <p class="slide-text"></p>
+                        <?php foreach ($slides as $index => $slide): ?>
+                            <div class="slide <?php echo $index === 0 ? 'active' : ''; ?>">
+                                <img src="<?php echo $slide['imagen']; ?>" 
+                                     alt="<?php echo htmlspecialchars($slide['titulo']); ?>"
+                                     onerror="this.src='<?php echo $slide['fallback']; ?>'; this.onerror=null;">
+                                
+                                <div class="slide-overlay"></div>
+                                
+                                <div class="slide-content">
+                                    <h2 class="slide-title"><?php echo htmlspecialchars($slide['titulo']); ?></h2>
+                                    <p class="slide-text">
+                                        <?php echo htmlspecialchars($slide['subtitulo']); ?>
+                                    </p>
+                                </div>
                             </div>
-                        </div>
+                        <?php endforeach; ?>
                     </div>
 
                     <div id="slider-ui" class="slider-nav">
@@ -1046,8 +1083,7 @@ if ($dbRifas) {
                         <h2 class="collection-title">Últimos Gallos</h2>
                     </div>
                     <p class="collection-desc">
-                        Ejemplares de casta seleccionada para alta competición y pie de cría.
-                        Garantía de genética pura y sanidad certificada.
+                        Ejemplares con casta seleccionada para alta competencia y pie de cría.
                     </p>
                 </div>
 
@@ -1083,7 +1119,14 @@ if ($dbRifas) {
                                 </div>
                                 <div class="action-buttons-group">
                                     <button class="btn-icon-glass"
-                                        onclick="event.stopPropagation(); addToCart('<?php echo addslashes($galloDestacado['nombre']); ?>', <?php echo $galloDestacado['precio']; ?>)"
+                                        onclick="event.stopPropagation(); addIndexProductToCart(
+                                            <?php echo $galloDestacado['id']; ?>, 
+                                            '<?php echo addslashes($galloDestacado['nombre']); ?>', 
+                                            <?php echo $galloDestacado['precio']; ?>, 
+                                            '<?php echo $imgDestacada; ?>', 
+                                            '<?php echo $galloDestacado['tipo']; ?>', 
+                                            <?php echo $galloDestacado['stock']; ?>
+                                        )"
                                         title="Agregar al carrito">
                                         <i class="fas fa-cart-plus"></i>
                                     </button>
@@ -1119,7 +1162,14 @@ if ($dbRifas) {
                                             <div class="price-text">$<?php echo number_format($gallo['precio'], 2); ?></div>
                                             <div class="action-buttons-group">
                                                 <button class="btn-icon-glass"
-                                                    onclick="event.stopPropagation(); addToCart('<?php echo addslashes($gallo['nombre']); ?>', <?php echo $gallo['precio']; ?>)">
+                                                    onclick="event.stopPropagation(); addIndexProductToCart(
+                                                        <?php echo $gallo['id']; ?>, 
+                                                        '<?php echo addslashes($gallo['nombre']); ?>', 
+                                                        <?php echo $gallo['precio']; ?>, 
+                                                        '<?php echo $imgGrid; ?>', 
+                                                        '<?php echo $gallo['tipo']; ?>', 
+                                                        <?php echo $gallo['stock']; ?>
+                                                    )">
                                                     <i class="fas fa-cart-plus"></i>
                                                 </button>
                                                 
@@ -1298,13 +1348,68 @@ if ($dbRifas) {
         }
         setInterval(() => changeSlide(1), 5000);
 
-        function addToCart(productName, price) {
-            // Verificar si existe la librería global UI
-            if (typeof TrojesUI !== 'undefined' && TrojesUI.toast) {
-                TrojesUI.toast('success', `Añadido: ${productName}`);
+        function addIndexProductToCart(id, nombre, precio, imagen, tipo, stockMax) {
+            // 1. Verificación de Seguridad: Asegurar que main.js cargó
+            if (typeof cart === 'undefined') {
+                console.error("Error crítico: El sistema de carrito (main.js) no está cargado.");
+                alert("Error interno. Por favor recarga la página.");
+                return;
+            }
+
+            // 2. Normalización de datos
+            const prodId = parseInt(id);
+            const prodPrice = parseFloat(precio);
+            const prodStock = parseInt(stockMax);
+
+            // 3. Buscar existencia previa
+            const existingIndex = cart.findIndex(item => item.id === prodId);
+            let currentQtyInCart = existingIndex > -1 ? cart[existingIndex].cantidad : 0;
+
+            // 4. Validaciones de Negocio (Idénticas a producto.php)
+            
+            // A) Validación para AVES (Stock único)
+            if (tipo === 'ave' && currentQtyInCart >= 1) {
+                // Usamos el Toast de UI si existe, o alert nativo
+                if (typeof TrojesUI !== 'undefined' && TrojesUI.toast) {
+                    TrojesUI.toast('error', 'Esta ave ya está en tu carrito (Pieza única).');
+                } else {
+                    alert("Esta ave ya está en tu carrito (Stock único).");
+                }
+                return;
+            }
+
+            // B) Validación de STOCK General (Para artículos o futuros productos)
+            if (tipo !== 'ave' && (currentQtyInCart + 1) > prodStock) {
+                alert(`Stock máximo alcanzado. Disponibles: ${prodStock}`);
+                return;
+            }
+
+            // 5. Actualización del Estado (Array Global)
+            if (existingIndex > -1) {
+                cart[existingIndex].cantidad++;
             } else {
-                console.log(`Agregado al carrito: ${productName} - $${price}`);
-                alert(`✅ ${productName} agregado al carrito`); 
+                cart.push({
+                    id: prodId,
+                    tipo: tipo,
+                    nombre: nombre,
+                    precio: prodPrice,
+                    imagen: imagen, // Guardamos la imagen para futuros usos en checkout
+                    cantidad: 1
+                });
+            }
+
+            // 6. Persistencia y Sincronización (El núcleo del ecosistema)
+            saveCart();      // Guarda en localStorage 'rlt_cart'
+            updateCartUI();  // Actualiza badges (Header y FAB)
+
+            // 7. Feedback Visual (UX)
+            // Abrimos el mini-cart para confirmar la acción, igual que en las grandes tiendas
+            if (typeof renderMiniCartContents === 'function') {
+                renderMiniCartContents();
+                openMiniCart();
+            } else {
+                // Fallback por si acaso
+                alert("✅ Producto agregado correctamente");
             }
         }
 

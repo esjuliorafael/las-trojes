@@ -16,8 +16,9 @@
                     </a>
 
                     <?php if (
-                        basename($_SERVER['PHP_SELF']) == 'tienda.php' || 
-                        basename($_SERVER['PHP_SELF']) == 'producto.php' || 
+                        basename($_SERVER['PHP_SELF']) == 'index.php' ||
+                        basename($_SERVER['PHP_SELF']) == 'tienda.php' ||
+                        basename($_SERVER['PHP_SELF']) == 'producto.php' ||
                         basename($_SERVER['PHP_SELF']) == 'checkout.php'
                     ): ?>
                         <div class="cart-dropdown-wrapper" style="position: relative;">

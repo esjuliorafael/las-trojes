@@ -100,7 +100,7 @@ $js_stock = $producto['stock'];
             position: relative;
             /* Box Model */
             overflow: hidden;
-            aspect-ratio: 4/3;
+            aspect-ratio: 1/1;
             border: 1px solid var(--divider);
             border-radius: 1rem;
             /* Visuals */

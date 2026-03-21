@@ -37,7 +37,14 @@ class Producto {
         }
 
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($productos as &$prod) {
+            $prod['galeria'] = $this->obtenerGaleria($prod['id']);
+        }
+
+        return $productos;
     }
 
     public function leerUno($id) {
@@ -49,7 +56,6 @@ class Producto {
         $producto = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($producto) {
-            // Obtener galería asociada
             $producto['galeria'] = $this->obtenerGaleria($id);
         }
 
@@ -64,9 +70,7 @@ class Producto {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // --- NUEVO MÉTODO PARA PRODUCTOS RELACIONADOS ---
     public function leerRelacionados($tipo, $exclude_id, $limit = 4) {
-        // Selecciona productos del mismo tipo, excluyendo el actual, activos y ordena aleatoriamente
         $query = "SELECT * FROM " . $this->table_name . " 
                   WHERE tipo = :tipo 
                   AND id != :exclude_id 
@@ -91,7 +95,6 @@ class Producto {
 
         $stmt = $this->conn->prepare($query);
 
-        // Lógica de Stock para Aves
         if ($this->tipo === 'ave') {
             $this->stock = ($this->estado_venta === 'disponible') ? 1 : 0;
         }
@@ -127,7 +130,6 @@ class Producto {
 
         $stmt = $this->conn->prepare($query);
 
-        // Lógica de Stock para Aves en actualización
         if ($this->tipo === 'ave') {
             $this->stock = ($this->estado_venta === 'disponible') ? 1 : 0;
         }
@@ -149,15 +151,58 @@ class Producto {
         return $stmt->execute();
     }
 
+    // --- FUNCIÓN ELIMINAR ACTUALIZADA (HARD DELETE) ---
     public function eliminar($id) {
-        // Soft delete para mantener historial
-        $query = "UPDATE " . $this->table_name . " SET activo = 0 WHERE id = :id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":id", $id);
-        return $stmt->execute();
-    }
+        // 1. Obtener la información del producto antes de borrarlo
+        $producto = $this->leerUno($id);
+        if (!$producto) return false;
 
-    // --- MANEJO DE ARCHIVOS ---
+        try {
+            $this->conn->beginTransaction();
+
+            // 2. Eliminar fotos de la Galería Física
+            // Obtenemos la galería asociada a este ID
+            $galeria = $this->obtenerGaleria($id);
+            foreach ($galeria as $foto) {
+                // Ruta absoluta al archivo
+                $ruta_foto = dirname(__DIR__) . "/" . $foto['ruta_archivo'];
+                if (file_exists($ruta_foto) && is_file($ruta_foto)) {
+                    unlink($ruta_foto); // Borrado físico
+                }
+            }
+            
+            // Borrar registros de galería en la BD
+            $queryGal = "DELETE FROM " . $this->table_gallery . " WHERE producto_id = :pid";
+            $stmtGal = $this->conn->prepare($queryGal);
+            $stmtGal->bindParam(":pid", $id);
+            $stmtGal->execute();
+
+            // 3. Eliminar Portada Física
+            if (!empty($producto['portada'])) {
+                $ruta_portada = dirname(__DIR__) . "/" . $producto['portada'];
+                if (file_exists($ruta_portada) && is_file($ruta_portada)) {
+                    unlink($ruta_portada); // Borrado físico
+                }
+            }
+
+            // 4. Eliminar el Registro del Producto en la BD
+            $query = "DELETE FROM " . $this->table_name . " WHERE id = :id";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(":id", $id);
+            
+            if ($stmt->execute()) {
+                $this->conn->commit();
+                return true;
+            } else {
+                $this->conn->rollBack();
+                return false;
+            }
+
+        } catch (Exception $e) {
+            $this->conn->rollBack();
+            return false;
+        }
+    }
 
     public function subirPortada($archivo) {
         return $this->procesarSubida($archivo, 'tienda/portadas');
@@ -165,22 +210,24 @@ class Producto {
 
     public function agregarGaleria($producto_id, $archivos) {
         $uploaded = 0;
-        foreach ($archivos['tmp_name'] as $key => $tmp_name) {
-            if ($archivos['error'][$key] === UPLOAD_ERR_OK) {
-                $file_array = [
-                    'name' => $archivos['name'][$key],
-                    'tmp_name' => $tmp_name,
-                    'error' => 0
-                ];
-
-                $ruta = $this->procesarSubida($file_array, 'tienda/galeria');
-
-                if ($ruta) {
-                    $query = "INSERT INTO " . $this->table_gallery . " (producto_id, ruta_archivo) VALUES (:pid, :ruta)";
-                    $stmt = $this->conn->prepare($query);
-                    $stmt->bindParam(":pid", $producto_id);
-                    $stmt->bindParam(":ruta", $ruta);
-                    if ($stmt->execute()) $uploaded++;
+        if (isset($archivos['tmp_name']) && is_array($archivos['tmp_name'])) {
+            foreach ($archivos['tmp_name'] as $key => $tmp_name) {
+                if ($archivos['error'][$key] === UPLOAD_ERR_OK) {
+                    $file_array = [
+                        'name' => $archivos['name'][$key],
+                        'tmp_name' => $tmp_name,
+                        'error' => 0
+                    ];
+    
+                    $ruta = $this->procesarSubida($file_array, 'tienda/galeria');
+    
+                    if ($ruta) {
+                        $query = "INSERT INTO " . $this->table_gallery . " (producto_id, ruta_archivo) VALUES (:pid, :ruta)";
+                        $stmt = $this->conn->prepare($query);
+                        $stmt->bindParam(":pid", $producto_id);
+                        $stmt->bindParam(":ruta", $ruta);
+                        if ($stmt->execute()) $uploaded++;
+                    }
                 }
             }
         }
@@ -193,7 +240,8 @@ class Producto {
         $nuevo_nombre = $uuid . '.' . $extension;
 
         $ruta_db = "assets/uploads/" . $subcarpeta . "/" . $nuevo_nombre;
-        $ruta_fisica = "../" . $ruta_db;
+        
+        $ruta_fisica = dirname(__DIR__) . "/" . $ruta_db;
 
         $directorio = dirname($ruta_fisica);
         if (!is_dir($directorio)) {

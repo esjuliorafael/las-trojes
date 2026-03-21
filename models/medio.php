@@ -9,6 +9,7 @@ class Medio {
     public $tipo;
     public $ruta_archivo;
     public $categoria_id;
+    public $subcategoria_id; // NUEVO CAMPO
     public $ubicacion;
     public $fecha_media;
     public $likes;
@@ -21,9 +22,10 @@ class Medio {
     }
 
     public function obtenerTodos() {
-        $query = "SELECT m.*, c.nombre as categoria_nombre 
+        $query = "SELECT m.*, c.nombre as categoria_nombre, s.nombre as subcategoria_nombre 
                   FROM " . $this->table_name . " m 
                   LEFT JOIN categorias c ON m.categoria_id = c.id 
+                  LEFT JOIN subcategorias s ON m.subcategoria_id = s.id 
                   WHERE m.activo = 1 
                   ORDER BY m.fecha_creacion DESC";
         $stmt = $this->conn->prepare($query);
@@ -31,7 +33,6 @@ class Medio {
         
         $medios_arr = array();
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            // Lógica para determinar la miniatura
             $thumbnail = null;
             if ($row['tipo'] === 'video') {
                 $thumb_path = str_replace('/videos/', '/videos/thumbs/', str_replace('.mp4', '.jpg', $row['ruta_archivo']));
@@ -40,28 +41,28 @@ class Medio {
                 $thumbnail = $row['ruta_archivo']; 
             }
 
-            // Generar slug de categoría para filtrado consistente
             $categoria_slug = $this->generarSlugCategoria($row['categoria_nombre']);
 
             $medio_item = array(
-                // Campos API
                 "id" => $row['id'],
                 "type" => $row['tipo'],
                 "url" => $row['ruta_archivo'],
                 "thumbnail" => $thumbnail,
                 "title" => $row['titulo'],
                 "description" => $row['descripcion'],
-                "category" => $categoria_slug, // Usamos el slug generado dinámicamente
-                "category_name" => $row['categoria_nombre'], // Enviamos también el nombre real para mostrar
+                "category" => $categoria_slug,
+                "category_name" => $row['categoria_nombre'],
+                "subcategory" => $row['subcategoria_nombre'] ?? '', 
+                "subcategoryId" => $row['subcategoria_id'], 
                 "likes" => (int)$row['likes'],
                 "isLiked" => (bool)$row['is_liked'],
                 "date" => $row['fecha_media'],
                 "location" => $row['ubicacion'],
-                // Campos Admin
                 "titulo" => $row['titulo'],
                 "descripcion" => $row['descripcion'],
                 "tipo" => $row['tipo'],
                 "ruta_archivo" => $row['ruta_archivo'],
+                "categoria_id" => $row['categoria_id'],
                 "categoria_nombre" => $row['categoria_nombre'],
                 "fecha_media" => $row['fecha_media']
             );
@@ -75,28 +76,16 @@ class Medio {
         return $medios_arr;
     }
 
-    // NUEVO MÉTODO: Genera un slug limpio a partir del nombre (Ej: "Lotes" -> "lotes", "Gallos Finos" -> "gallos-finos")
     private function generarSlugCategoria($nombre) {
         if (empty($nombre)) return 'sin-categoria';
-        
-        // 1. Convertir a minúsculas
         $slug = mb_strtolower($nombre, 'UTF-8');
-        
-        // 2. Reemplazar caracteres acentuados
         $buscar = array('á', 'é', 'í', 'ó', 'ú', 'ñ', 'ü');
         $reemplazar = array('a', 'e', 'i', 'o', 'u', 'n', 'u');
         $slug = str_replace($buscar, $reemplazar, $slug);
-        
-        // 3. Reemplazar espacios y caracteres no alfanuméricos por guiones
         $slug = preg_replace('/[^a-z0-9]+/', '-', $slug);
-        
-        // 4. Eliminar guiones al inicio y final
         $slug = trim($slug, '-');
-        
         return $slug;
     }
-
-    // ... (Resto de métodos: subirMedio, actualizar, eliminar, etc. SE MANTIENEN IGUAL) ...
     
     public function subirMedio($archivo_temporal, $nombre_archivo, $tipo, $thumbnail_base64 = null) {
         $uuid = uniqid();
@@ -105,7 +94,8 @@ class Medio {
         
         $carpeta_tipo = ($tipo == 'video') ? "videos" : "fotos";
         $ruta_db = "assets/uploads/" . $carpeta_tipo . "/" . $nuevo_nombre; 
-        $ruta_destino_filesystem = "../" . $ruta_db; 
+        
+        $ruta_destino_filesystem = dirname(__DIR__) . "/" . $ruta_db; 
         
         $carpeta_destino = dirname($ruta_destino_filesystem);
         if (!is_dir($carpeta_destino)) {
@@ -117,9 +107,10 @@ class Medio {
         }
 
         if (move_uploaded_file($archivo_temporal, $ruta_destino_filesystem)) {
+            // INSERT incluye subcategoria_id
             $query = "INSERT INTO " . $this->table_name . " 
-                     (titulo, descripcion, tipo, ruta_archivo, categoria_id, ubicacion, fecha_media) 
-                     VALUES (:titulo, :descripcion, :tipo, :ruta_archivo, :categoria_id, :ubicacion, :fecha_media)";
+                     (titulo, descripcion, tipo, ruta_archivo, categoria_id, subcategoria_id, ubicacion, fecha_media) 
+                     VALUES (:titulo, :descripcion, :tipo, :ruta_archivo, :categoria_id, :subcategoria_id, :ubicacion, :fecha_media)";
             
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(":titulo", $this->titulo);
@@ -127,6 +118,12 @@ class Medio {
             $stmt->bindParam(":tipo", $this->tipo);
             $stmt->bindParam(":ruta_archivo", $ruta_db); 
             $stmt->bindParam(":categoria_id", $this->categoria_id);
+            // Manejo de NULL para subcategoría
+            if (!empty($this->subcategoria_id)) {
+                $stmt->bindParam(":subcategoria_id", $this->subcategoria_id);
+            } else {
+                $stmt->bindValue(":subcategoria_id", null, PDO::PARAM_NULL);
+            }
             $stmt->bindParam(":ubicacion", $this->ubicacion);
             $stmt->bindParam(":fecha_media", $this->fecha_media);
             
@@ -135,12 +132,14 @@ class Medio {
         return false;
     }
 
-    public function actualizar($id, $titulo, $descripcion, $tipo, $categoria_id, $ubicacion, $fecha_media, $archivo_temporal = null, $nombre_archivo = null, $thumbnail_base64 = null) {
+    // ACTUALIZADO: Recibe subcategoria_id
+    public function actualizar($id, $titulo, $descripcion, $tipo, $categoria_id, $subcategoria_id, $ubicacion, $fecha_media, $archivo_temporal = null, $nombre_archivo = null, $thumbnail_base64 = null) {
         $query = "UPDATE " . $this->table_name . " 
                   SET titulo = :titulo, 
                       descripcion = :descripcion, 
                       tipo = :tipo, 
                       categoria_id = :categoria_id, 
+                      subcategoria_id = :subcategoria_id,
                       ubicacion = :ubicacion, 
                       fecha_media = :fecha_media";
         
@@ -152,7 +151,8 @@ class Medio {
             
             $carpeta_tipo = ($tipo == 'video') ? "videos" : "fotos";
             $ruta_db = "assets/uploads/" . $carpeta_tipo . "/" . $nuevo_nombre;
-            $ruta_destino_filesystem = "../" . $ruta_db;
+            
+            $ruta_destino_filesystem = dirname(__DIR__) . "/" . $ruta_db;
             
             $carpeta_destino = dirname($ruta_destino_filesystem);
             if (!is_dir($carpeta_destino)) {
@@ -177,6 +177,13 @@ class Medio {
         $stmt->bindParam(":descripcion", $descripcion);
         $stmt->bindParam(":tipo", $tipo);
         $stmt->bindParam(":categoria_id", $categoria_id);
+        
+        if (!empty($subcategoria_id)) {
+            $stmt->bindParam(":subcategoria_id", $subcategoria_id);
+        } else {
+            $stmt->bindValue(":subcategoria_id", null, PDO::PARAM_NULL);
+        }
+
         $stmt->bindParam(":ubicacion", $ubicacion);
         $stmt->bindParam(":fecha_media", $fecha_media);
         $stmt->bindParam(":id", $id);
@@ -192,7 +199,8 @@ class Medio {
         $parts = explode(',', $base64_string);
         if (count($parts) == 2) {
             $data = base64_decode($parts[1]);
-            $thumbs_dir = "../assets/uploads/videos/thumbs/";
+            // CORRECCIÓN: Ruta absoluta
+            $thumbs_dir = dirname(__DIR__) . "/assets/uploads/videos/thumbs/";
             if (!is_dir($thumbs_dir)) {
                 mkdir($thumbs_dir, 0755, true);
             }
@@ -223,10 +231,13 @@ class Medio {
             $resultado = $stmt->execute();
 
             if ($resultado) {
-                $ruta_archivo = "../" . $medio_data['ruta_archivo']; 
+                // CORRECCIÓN: Rutas absolutas para eliminar el archivo físico
+                $ruta_archivo = dirname(__DIR__) . "/" . $medio_data['ruta_archivo']; 
+                
                 if (file_exists($ruta_archivo) && is_file($ruta_archivo)) {
                     unlink($ruta_archivo);
                 }
+                
                 if ($medio_data['tipo'] == 'video') {
                     $thumb_path = str_replace('/videos/', '/videos/thumbs/', str_replace('.mp4', '.jpg', $ruta_archivo));
                     if (file_exists($thumb_path) && is_file($thumb_path)) {
