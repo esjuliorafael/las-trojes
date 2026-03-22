@@ -415,47 +415,108 @@ $zonasDb = $stmtZonas->fetchAll(PDO::FETCH_ASSOC);
             document.getElementById('btnPlaceOrder').disabled = !zoneType;
         }
 
-        function processOrder() {
+        async function processOrder() {
             if (cart.length === 0) return;
 
             const btn = document.getElementById('btnPlaceOrder');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando orden...';
+            const formContainer = document.querySelector('.checkout-form-col');
+            const form = document.getElementById('checkoutForm');
 
-            const nombre = document.getElementById('nombreCliente').value;
-            const estado = document.getElementById('estadoSelect').value;
-            const totalTexto = document.getElementById('summaryTotal').textContent;
-            
-            let listaProductos = cart.map(item => `- ${item.cantidad}x ${item.nombre}`).join('\n');
-            const idOrden = Math.floor(Date.now() / 1000).toString().slice(-6);
-
-            let plantilla = appConfig.whatsapp_plantilla_default || 'Nuevo pedido de {nombre_cliente}\nTotal: {total}\nItems:\n{lista_productos}';
-            const telefono = appConfig.whatsapp_telefono_default || '';
-
-            let mensaje = plantilla
-                .replace('{id_orden}', idOrden)
-                .replace('{nombre_cliente}', nombre)
-                .replace('{total}', totalTexto)
-                .replace('{lista_productos}', listaProductos);
-
-            const direccionInput = document.getElementById('direccionInput');
-            if (!direccionInput.closest('.hidden')) {
-                mensaje += `\n\nDirección de envío: ${direccionInput.value}, ${estado}`;
-            } else {
-                mensaje += `\n\nEstado destino: ${estado}`;
+            // Validación nativa
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
             }
 
-            const url = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
-            
-            // Limpiar compra
-            cart = [];
-            localStorage.removeItem('rlt_cart');
-            updateCartUI(); 
-            renderMiniCartContents();
-            
-            // Mandar a WhatsApp
-            window.open(url, '_blank');
-            setTimeout(() => { window.location.href = 'index.php'; }, 1000);
+            // Bloquear UI
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando Orden...';
+
+            const nombre = document.getElementById('nombreCliente').value;
+            const tel = document.getElementById('telCliente').value;
+            const estado = document.getElementById('estadoSelect').value;
+            const direccionInput = document.getElementById('direccionInput');
+
+            const hasArt = cart.some(i => i.tipo === 'articulo');
+            const direccionFinal = hasArt ? (direccionInput ? direccionInput.value : '') : "El envío se realiza al aeropuerto o terminal más cercana al estado.";
+
+            const orderData = {
+                cliente: { nombre, telefono: tel, direccion: direccionFinal, estado },
+                carrito: cart
+            };
+
+            try {
+                const response = await fetch('api/checkout.php?accion=crear_orden', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
+                });
+                const res = await response.json();
+
+                if (res.success) {
+                    // Limpieza Local
+                    localStorage.removeItem('rlt_cart');
+                    cart = [];
+                    if (typeof updateCartUI === 'function') updateCartUI();
+                    if (typeof renderMiniCartContents === 'function') renderMiniCartContents();
+
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                    // Inyección de Vista de Éxito
+                    formContainer.innerHTML = `
+                        <div class="checkout-feedback feedback-success">
+                            <i class="fas fa-check-circle feedback-icon" style="color: #10b981; font-size: 3rem; margin-bottom: 1rem;"></i>
+                            <h2 class="feedback-title" style="font-size: 2rem; color: #1f2937;">¡Gracias, ${nombre.split(' ')[0]}!</h2>
+                            <p class="feedback-text" style="color: #4b5563; margin-bottom: 1.5rem;">
+                                Tu orden <strong style="color: #8b5e3c;">#${res.orden_id}</strong> ha sido registrada correctamente.<br>
+                                Estamos abriendo WhatsApp para confirmar tu pago y envío.
+                            </p>
+                            <a href="${res.whatsapp_link}" target="_blank" class="btn-checkout" style="text-decoration: none;">
+                                <i class="fab fa-whatsapp"></i> Enviar Mensaje Ahora
+                            </a>
+                            <div style="margin-top: 1rem; color: #9ca3af; font-size: 0.9rem; text-align: center;">
+                                <i class="fas fa-circle-notch fa-spin"></i> Redirigiendo en <strong id="countdown">3</strong> segundos...
+                            </div>
+                        </div>
+                    `;
+
+                    let seconds = 3;
+                    const countSpan = document.getElementById('countdown');
+                    const timer = setInterval(() => {
+                        seconds--;
+                        if(countSpan) countSpan.textContent = seconds;
+                        if (seconds <= 0) {
+                            clearInterval(timer);
+                            window.open(res.whatsapp_link, '_blank');
+                            setTimeout(() => { window.location.href = 'index.php'; }, 1000);
+                        }
+                    }, 1000);
+
+                } else {
+                    // Feedback de Error
+                    let errorBox = document.getElementById('checkoutErrorBox');
+                    if (!errorBox) {
+                        errorBox = document.createElement('div');
+                        errorBox.id = 'checkoutErrorBox';
+                        errorBox.className = 'alert-info';
+                        errorBox.style.background = '#fee2e2';
+                        errorBox.style.color = '#991b1b';
+                        errorBox.style.borderLeft = '4px solid #ef4444';
+                        errorBox.style.marginTop = '1rem';
+                        form.insertBefore(errorBox, btn);
+                    }
+                    errorBox.innerHTML = `<div style="display:flex; gap:10px; align-items:center;"><i class="fas fa-exclamation-triangle" style="font-size:1.5rem;"></i><div><strong>No pudimos procesar tu pedido</strong><br>${res.message}</div></div>`;
+                    
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fab fa-whatsapp"></i> Intentar Nuevamente';
+                    errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error de conexión. Verifica tu internet.");
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fab fa-whatsapp"></i> Finalizar Pedido';
+            }
         }
 
         function formatPrice(p) {

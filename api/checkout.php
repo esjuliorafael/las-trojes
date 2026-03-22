@@ -18,11 +18,17 @@ $envio = new Envio($db);
 $orden = new Orden($db);
 $confModel = new Configuracion($db);
 
-$config = $confModel->obtenerConfiguracion();
+// CORRECCIÓN: Construir el arreglo $config usando obtenerTodas()
+$stmtConfig = $confModel->obtenerTodas();
+$config = [];
+while ($row = $stmtConfig->fetch(PDO::FETCH_ASSOC)) {
+    $config[$row['clave']] = $row['valor'];
+}
+
 $data = json_decode(file_get_contents("php://input"), true);
 $accion = isset($_GET['accion']) ? $_GET['accion'] : '';
 
-// 1. CONSTANTE DE DOMINIO (Solo la raíz, porque la BD ya tiene la ruta completa)
+// 1. CONSTANTE DE DOMINIO
 $DOMAIN_URL = "https://rancholastrojes.com.mx/";
 $IMG_PLACEHOLDER = "https://rancholastrojes.com.mx/assets/images/logo.png"; 
 
@@ -30,15 +36,7 @@ $IMG_PLACEHOLDER = "https://rancholastrojes.com.mx/assets/images/logo.png";
 /* LÓGICA DE LA API                                                           */
 /* -------------------------------------------------------------------------- */
 
-if ($accion == 'calcular_envio') {
-    $estado  = $data['estado'] ?? '';
-    $has_art = $data['tiene_articulos'] ?? false;
-    $has_ave = $data['tiene_aves'] ?? false;
-    
-    $costo = $envio->calcularCostoEnvio($estado, $has_art, $has_ave);
-    echo json_encode(['costo_envio' => $costo]);
-
-} elseif ($accion == 'crear_orden') {
+if ($accion == 'crear_orden') {
     
     $cliente = $data['cliente'];
     $carrito = $data['carrito'];
@@ -47,6 +45,7 @@ if ($accion == 'calcular_envio') {
     $subtotal = 0;
     $tiene_articulos = false;
     $tiene_aves = false;
+    $count_aves = 0;
     
     $lista_productos_txt = "";  // Para WhatsApp
     $lista_productos_html = ""; // Para Email
@@ -59,7 +58,10 @@ if ($accion == 'calcular_envio') {
         $subtotal += $total_item;
         
         if ($item['tipo'] == 'articulo') $tiene_articulos = true;
-        if ($item['tipo'] == 'ave')      $tiene_aves = true;
+        if ($item['tipo'] == 'ave') {
+            $tiene_aves = true;
+            $count_aves += (int)$item['cantidad'];
+        }
 
         // --- A. Obtener Ruta de BD ---
         $ruta_db = "";
@@ -109,7 +111,33 @@ if ($accion == 'calcular_envio') {
         </table>";
     }
 
-    $costo_envio = $envio->calcularCostoEnvio($cliente['estado'], $tiene_articulos, $tiene_aves);
+    // --- CÁLCULO EXACTO DE ENVÍO (Backend) ---
+    $stmtZona = $db->prepare("SELECT tipo_zona FROM zonas_envio WHERE estado = :estado LIMIT 1");
+    $stmtZona->execute([':estado' => $cliente['estado']]);
+    $zonaDb = $stmtZona->fetch(PDO::FETCH_ASSOC);
+    $tipo_zona = $zonaDb ? $zonaDb['tipo_zona'] : 'normal';
+
+    $costo_envio = 0;
+
+    // Regla 1: Cada ave cobra un envío independiente
+    if ($tiene_aves && $count_aves > 0) {
+        if (isset($config['envio_gratis_aves']) && $config['envio_gratis_aves'] == '1') {
+            $costo_envio += 0;
+        } else {
+            $costo_base_ave = ($tipo_zona === 'extendida') ? ($config['envio_costo_extendida'] ?? 0) : ($config['envio_costo_normal'] ?? 0);
+            $costo_envio += ($costo_base_ave * $count_aves);
+        }
+    }
+
+    // Regla 2: Artículos cobran una tarifa plana única
+    if ($tiene_articulos) {
+        if (isset($config['envio_gratis_articulos']) && $config['envio_gratis_articulos'] == '1') {
+            $costo_envio += 0;
+        } else {
+            $costo_envio += ($config['envio_costo_base_articulos'] ?? 0);
+        }
+    }
+
     $total = $subtotal + $costo_envio;
 
     $costos_finales = [
