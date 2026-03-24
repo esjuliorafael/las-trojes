@@ -105,7 +105,11 @@ class Orden {
     }
 
     public function obtenerDetalles($orden_id) {
-        $query = "SELECT * FROM " . $this->table_detalles . " WHERE orden_id = :id";
+        // Hacemos un LEFT JOIN para traer la 'portada' de la tabla productos
+        $query = "SELECT od.*, p.portada 
+                  FROM " . $this->table_detalles . " od
+                  LEFT JOIN productos p ON od.producto_id = p.id
+                  WHERE od.orden_id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":id", $orden_id);
         $stmt->execute();

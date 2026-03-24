@@ -25,11 +25,13 @@ if ($method === 'POST') {
             session_start();
             $_SESSION['usuario_id'] = $usuario->id;
             $_SESSION['usuario_nombre'] = $usuario->nombre;
+            $_SESSION['usuario_rol'] = $usuario->rol; // <-- NUEVO: Guardar rol en sesión
             
             jsonResponse(true, "Login exitoso", [
                 'id' => $usuario->id,
                 'name' => $usuario->nombre,
-                'email' => $usuario->email
+                'email' => $usuario->email,
+                'role' => $usuario->rol // <-- NUEVO: Enviar rol al frontend
             ]);
         } else {
             // El usuario o la contraseña fallaron, o el usuario está inactivo

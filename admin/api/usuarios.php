@@ -30,16 +30,18 @@ if ($method === 'POST') {
 
     // CREAR USUARIO
     if ($action === 'create') {
-        if ($usuario->crearUsuario($data['username'], $data['password'], $data['fullName'], $data['email'])) {
+        $rol = $data['role'] ?? 'staff';
+        if ($usuario->crearUsuario($data['username'], $data['password'], $data['fullName'], $data['email'], $rol)) {
             jsonResponse(true, "Usuario creado exitosamente");
         } else {
             jsonResponse(false, "El nombre de usuario o correo ya están en uso");
         }
     } 
-    // ACTUALIZAR USUARIO (Perfil, Username y Contraseña)
+    // ACTUALIZAR USUARIO
     elseif ($action === 'update') {
         $password = !empty($data['password']) ? $data['password'] : null;
-        if ($usuario->actualizarAdministrador($data['id'], $data['fullName'], $data['email'], $data['username'], $password)) {
+        $rol = $data['role'] ?? 'staff';
+        if ($usuario->actualizarAdministrador($data['id'], $data['fullName'], $data['email'], $data['username'], $rol, $password)) {
             jsonResponse(true, "Usuario actualizado correctamente");
         } else {
             jsonResponse(false, "El nombre de usuario o correo ya están en uso por otra persona");

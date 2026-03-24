@@ -8,7 +8,7 @@ class Usuario {
     public $password_hash;
     public $nombre;
     public $email;
-    // Nuevas propiedades
+    public $rol; // <-- NUEVO
     public $recibir_notificaciones;
     public $email_notificaciones;
     public $fecha_creacion;
@@ -19,8 +19,7 @@ class Usuario {
     }
 
     public function login($username, $password) {
-        // Actualizado para traer las preferencias
-        $query = "SELECT id, username, password_hash, nombre, email, recibir_notificaciones, email_notificaciones 
+        $query = "SELECT id, username, password_hash, nombre, email, rol, recibir_notificaciones, email_notificaciones 
                   FROM " . $this->table_name . " 
                   WHERE (username = :username OR email = :email) 
                   AND activo = 1 LIMIT 1";
@@ -32,12 +31,12 @@ class Usuario {
 
         if ($stmt->rowCount() == 1) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            
             if (password_verify($password, $row['password_hash'])) {
                 $this->id = $row['id'];
                 $this->username = $row['username'];
                 $this->nombre = $row['nombre'];
                 $this->email = $row['email'];
+                $this->rol = $row['rol'];
                 $this->recibir_notificaciones = (bool)$row['recibir_notificaciones'];
                 $this->email_notificaciones = $row['email_notificaciones'];
                 return true;
@@ -46,24 +45,21 @@ class Usuario {
         return false;
     }
 
-    // Actualizado: Al crear un usuario, las notificaciones están activadas y usan su email por defecto
-    public function crearUsuario($username, $password, $nombre, $email) {
-        if ($this->existeUsuario($username, $email)) {
-            return false;
-        }
+    public function crearUsuario($username, $password, $nombre, $email, $rol) {
+        if ($this->existeUsuario($username, $email)) return false;
 
         $query = "INSERT INTO " . $this->table_name . " 
-                  (username, password_hash, nombre, email, recibir_notificaciones, email_notificaciones) 
-                  VALUES (:username, :password_hash, :nombre, :email, 1, :email)";
+                  (username, password_hash, nombre, email, rol, recibir_notificaciones, email_notificaciones) 
+                  VALUES (:username, :password_hash, :nombre, :email, :rol, 1, :email)";
         
         $stmt = $this->conn->prepare($query);
-        
         $password_hash = password_hash($password, PASSWORD_DEFAULT);
         
         $stmt->bindParam(":username", $username);
         $stmt->bindParam(":password_hash", $password_hash);
         $stmt->bindParam(":nombre", $nombre);
         $stmt->bindParam(":email", $email);
+        $stmt->bindParam(":rol", $rol);
         
         if ($stmt->execute()) {
             $this->id = $this->conn->lastInsertId();
@@ -73,64 +69,41 @@ class Usuario {
     }
 
     public function existeUsuario($username, $email, $exclude_id = null) {
-        $query = "SELECT id FROM " . $this->table_name . " 
-                  WHERE (username = :username OR email = :email)";
-        
-        if ($exclude_id) {
-            $query .= " AND id != :exclude_id";
-        }
-        
+        $query = "SELECT id FROM " . $this->table_name . " WHERE (username = :username OR email = :email)";
+        if ($exclude_id) $query .= " AND id != :exclude_id";
         $query .= " LIMIT 1";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":username", $username);
         $stmt->bindParam(":email", $email);
-        
-        if ($exclude_id) {
-            $stmt->bindParam(":exclude_id", $exclude_id);
-        }
+        if ($exclude_id) $stmt->bindParam(":exclude_id", $exclude_id);
         
         $stmt->execute();
-        
         return $stmt->rowCount() > 0;
     }
 
     public function cambiarPassword($usuario_id, $nueva_password) {
-        $query = "UPDATE " . $this->table_name . " 
-                  SET password_hash = :password_hash 
-                  WHERE id = :id";
-        
+        $query = "UPDATE " . $this->table_name . " SET password_hash = :password_hash WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $password_hash = password_hash($nueva_password, PASSWORD_DEFAULT);
-        
         $stmt->bindParam(":password_hash", $password_hash);
         $stmt->bindParam(":id", $usuario_id);
-        
         return $stmt->execute();
     }
 
     public function obtenerPorId($id) {
-        // Trae las nuevas columnas
-        $query = "SELECT id, username, nombre, email, recibir_notificaciones, email_notificaciones, fecha_creacion, activo 
-                  FROM " . $this->table_name . " 
-                  WHERE id = :id LIMIT 1";
-        
+        $query = "SELECT id, username, nombre, email, rol, recibir_notificaciones, email_notificaciones, fecha_creacion, activo 
+                  FROM " . $this->table_name . " WHERE id = :id LIMIT 1";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":id", $id);
         $stmt->execute();
-        
-        if ($stmt->rowCount() > 0) {
-            return $stmt->fetch(PDO::FETCH_ASSOC);
-        }
+        if ($stmt->rowCount() > 0) return $stmt->fetch(PDO::FETCH_ASSOC);
         return false;
     }
 
     public function obtenerTodos() {
-        // Trae las nuevas columnas
-        $query = "SELECT id, username, nombre, email, recibir_notificaciones, email_notificaciones, fecha_creacion, activo 
-                  FROM " . $this->table_name . " 
-                  ORDER BY nombre ASC";
-        
+        $query = "SELECT id, username, nombre, email, rol, recibir_notificaciones, email_notificaciones, fecha_creacion, activo 
+                  FROM " . $this->table_name . " ORDER BY nombre ASC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         
@@ -151,10 +124,7 @@ class Usuario {
     }
 
     public function desactivar($id) {
-        if (isset($_SESSION['usuario_id']) && $id == $_SESSION['usuario_id']) {
-            return false;
-        }
-
+        if (isset($_SESSION['usuario_id']) && $id == $_SESSION['usuario_id']) return false;
         $query = "UPDATE " . $this->table_name . " SET activo = 0 WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":id", $id);
@@ -171,10 +141,7 @@ class Usuario {
     }
 
     public function eliminar($id) {
-        if (isset($_SESSION['usuario_id']) && $id == $_SESSION['usuario_id']) {
-            return false;
-        }
-
+        if (isset($_SESSION['usuario_id']) && $id == $_SESSION['usuario_id']) return false;
         $query = "DELETE FROM " . $this->table_name . " WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":id", $id);
@@ -183,14 +150,8 @@ class Usuario {
     }
 
     public function actualizarPerfil($id, $nombre, $email) {
-        if ($this->existeUsuario('', $email, $id)) {
-            return false;
-        }
-
-        $query = "UPDATE " . $this->table_name . " 
-                  SET nombre = :nombre, email = :email 
-                  WHERE id = :id";
-        
+        if ($this->existeUsuario('', $email, $id)) return false;
+        $query = "UPDATE " . $this->table_name . " SET nombre = :nombre, email = :email WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":nombre", $nombre);
         $stmt->bindParam(":email", $email);
@@ -199,25 +160,18 @@ class Usuario {
         return $stmt->execute();
     }
 
-    public function actualizarAdministrador($id, $nombre, $email, $username, $password = null) {
-        // Verificar si el username o email ya existen en OTRO usuario distinto
-        if ($this->existeUsuario($username, $email, $id)) {
-            return false;
-        }
+    public function actualizarAdministrador($id, $nombre, $email, $username, $rol, $password = null) {
+        if ($this->existeUsuario($username, $email, $id)) return false;
 
-        $query = "UPDATE " . $this->table_name . " 
-                  SET nombre = :nombre, email = :email, username = :username";
-        
-        if ($password) {
-            $query .= ", password_hash = :password_hash";
-        }
-        
+        $query = "UPDATE " . $this->table_name . " SET nombre = :nombre, email = :email, username = :username, rol = :rol";
+        if ($password) $query .= ", password_hash = :password_hash";
         $query .= " WHERE id = :id";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":nombre", $nombre);
         $stmt->bindParam(":email", $email);
         $stmt->bindParam(":username", $username);
+        $stmt->bindParam(":rol", $rol);
         $stmt->bindParam(":id", $id);
         
         if ($password) {
@@ -229,16 +183,9 @@ class Usuario {
     }
 
     public function actualizarPreferenciasNotificacion($id, $recibir_notificaciones, $email_notificaciones) {
-        $query = "UPDATE " . $this->table_name . " 
-                  SET recibir_notificaciones = :recibir_notificaciones, 
-                      email_notificaciones = :email_notificaciones 
-                  WHERE id = :id";
-        
+        $query = "UPDATE " . $this->table_name . " SET recibir_notificaciones = :recibir_notificaciones, email_notificaciones = :email_notificaciones WHERE id = :id";
         $stmt = $this->conn->prepare($query);
-        
-        // PDO maneja los booleanos como 1 o 0 si le pasamos un int, o explícitamente PDO::PARAM_INT
         $recibir_int = $recibir_notificaciones ? 1 : 0;
-        
         $stmt->bindParam(":recibir_notificaciones", $recibir_int, PDO::PARAM_INT);
         $stmt->bindParam(":email_notificaciones", $email_notificaciones);
         $stmt->bindParam(":id", $id);

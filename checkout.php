@@ -438,7 +438,7 @@ $zonasDb = $stmtZonas->fetchAll(PDO::FETCH_ASSOC);
             const direccionInput = document.getElementById('direccionInput');
 
             const hasArt = cart.some(i => i.tipo === 'articulo');
-            const direccionFinal = hasArt ? (direccionInput ? direccionInput.value : '') : "El envío se realiza al aeropuerto o terminal más cercana al estado.";
+            const direccionFinal = hasArt ? (direccionInput ? direccionInput.value : '') : `El envío se realizará al aeropuerto o terminal más cercana al estado de ${estado}.`;
 
             const orderData = {
                 cliente: { nombre, telefono: tel, direccion: direccionFinal, estado },

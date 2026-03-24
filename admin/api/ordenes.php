@@ -8,7 +8,12 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
     $ordenes = $orden->obtenerTodas();
-    // Tu modelo devuelve un array plano, vamos a enriquecerlo si es necesario
+    
+    // Enriquecer el arreglo con los detalles de cada orden
+    foreach ($ordenes as &$ord) {
+        $ord['detalles'] = $orden->obtenerDetalles($ord['id']);
+    }
+    
     echo json_encode($ordenes);
 }
 
