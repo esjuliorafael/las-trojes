@@ -1,5 +1,0 @@
----
-deployment:
-  tasks:
-    - export DEPLOYPATH=/home/granlivo/rancholastrojes.com.mx/
-    - /bin/cp -R . $DEPLOYPATH
